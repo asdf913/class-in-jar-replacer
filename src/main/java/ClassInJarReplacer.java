@@ -28,6 +28,7 @@ import java.util.TooManyListenersException;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -618,9 +619,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
-		final String name = getName(file);
-		//
-		final Collection<ZipEntry> collection = containsKey(names, name) ? get(names, name) : null;
+		final Collection<ZipEntry> collection = testAndApply(x -> containsKey(names, x), getName(file),
+				x -> get(names, x), null);
 		//
 		final int cm = intValue(compressionMethod, 0);
 		//
@@ -684,6 +684,15 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static <T, R> R testAndApply(final Predicate<T> predicate, final T value, final Function<T, R> functionTrue,
+			final Function<T, R> functionFalse) {
+		return test(predicate, value) ? apply(functionTrue, value) : apply(functionFalse, value);
+	}
+
+	private static <T, R> R apply(final Function<T, R> instance, final T value) {
+		return instance != null ? instance.apply(value) : null;
 	}
 
 	private static String getName(final File instance) {
