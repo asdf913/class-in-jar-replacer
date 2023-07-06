@@ -673,37 +673,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			if (Objects.equals(getMimeType(ci), "application/x-java-applet")) {
 				//
-				JavaClass javaClass = null;
+				addJavaClassIntoZipFile(file, fileJar, jtc, cm);
 				//
-				try (final InputStream is = new FileInputStream(file)) {
-					//
-					javaClass = new ClassParser(is, null).parse();
-					//
-				} catch (final Throwable throwable) {
-					// TODO Auto-generated catch block
-					throwable.printStackTrace();
-				} // try
-					//
-				if (javaClass != null) {
-					//
-					try {
-						//
-						ZipUtil.addEntry(fileJar,
-								String.format("%1$s.class", StringUtils.replace(javaClass.getClassName(), ".", "/")),
-								FileUtils.readFileToByteArray(file), cm);
-						//
-						setText(jtc, Boolean.toString(true));
-						//
-					} catch (final IOException e) {
-						//
-						setText(jtc, Boolean.toString(false));
-						//
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} // try
-						//
-				} // if
-					//
 			} // if
 				//
 		} else if (collection.size() == 1) {
@@ -716,6 +687,43 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			} catch (final IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} // try
+				//
+		} // if
+			//
+	}
+
+	private static void addJavaClassIntoZipFile(final File file, final File fileJar, final JTextComponent jtc,
+			final int cm) {
+		//
+		JavaClass javaClass = null;
+		//
+		try (final InputStream is = new FileInputStream(file)) {
+			//
+			javaClass = new ClassParser(is, null).parse();
+			//
+		} catch (final Throwable throwable) {
+			// TODO Auto-generated catch block
+			throwable.printStackTrace();
+		} // try
+			//
+		if (javaClass != null) {
+			//
+			try {
+				//
+				ZipUtil.addEntry(fileJar,
+						String.format("%1$s.class", StringUtils.replace(javaClass.getClassName(), ".", "/")),
+						FileUtils.readFileToByteArray(file), cm);
+				//
+				setText(jtc, Boolean.toString(true));
+				//
+			} catch (final IOException e) {
+				//
+				setText(jtc, Boolean.toString(false));
+				//
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				//
 			} // try
 				//
 		} // if
