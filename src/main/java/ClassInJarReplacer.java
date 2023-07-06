@@ -40,6 +40,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 
@@ -316,7 +317,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				? cast(ClassInJarReplacer.class, Narcissus.allocateInstance(ClassInJarReplacer.class))
 				: new ClassInJarReplacer();
 		//
-		instance.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		instance.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		//
 		instance.setLayout(new MigLayout());
 		//
