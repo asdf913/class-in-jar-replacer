@@ -324,8 +324,12 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				? cast(ClassInJarReplacer.class, Narcissus.allocateInstance(ClassInJarReplacer.class))
 				: new ClassInJarReplacer();
 		//
-		instance.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		//
+		if (instance != null) {
+			//
+			instance.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+			//
+		} // if
+			//
 		instance.setLayout(new MigLayout());
 		//
 		instance.init();
