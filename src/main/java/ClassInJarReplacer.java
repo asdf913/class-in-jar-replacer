@@ -16,6 +16,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Proxy;
@@ -81,15 +85,36 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	private static final long serialVersionUID = -2027349858511726609L;
 
-	private DropTarget dtFileJar, dtFile = null;
+	@Target(ElementType.FIELD)
+	@Retention(RetentionPolicy.RUNTIME)
+	private @interface Note {
+		String value();
+	}
 
-	private File fileJar, file = null;
+	@Note("File Jar")
+	private DropTarget dtFileJar = null;
+
+	@Note("File")
+	private DropTarget dtFile = null;
+
+	@Note("File Jar")
+	private File fileJar = null;
+
+	@Note("File")
+	private File file = null;
 
 	private JComboBox<?> jcbCompressionLevel = null;
 
-	private JTextComponent jtfFileJar, jtfFile, jtfResult = null;
+	@Note("File Jar")
+	private JTextComponent jtfFileJar = null;
 
-	private AbstractButton jcbAuto, jbExecute = null;
+	private JTextComponent jtfFile, jtfResult = null;
+
+	@Note("Auto")
+	private AbstractButton jcbAuto = null;
+
+	@Note("Execute")
+	private AbstractButton jbExecute = null;
 
 	private ClassInJarReplacer() {
 	}
