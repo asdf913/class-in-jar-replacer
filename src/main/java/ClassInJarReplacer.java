@@ -365,16 +365,14 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			instance.init();
 			//
-		} // if
-			//
-		final boolean isHeadless = GraphicsEnvironment.isHeadless();
-		//
-		if (Boolean.logicalAnd(!isHeadless, !isUnderDebugOrMaven())) {
-			//
-			instance.pack();
-			//
-			instance.setVisible(true);
-			//
+			if (Boolean.logicalAnd(!GraphicsEnvironment.isHeadless(), !isUnderDebugOrMaven())) {
+				//
+				instance.pack();
+				//
+				instance.setVisible(true);
+				//
+			} // if
+				//
 		} // if
 			//
 	}
