@@ -32,7 +32,6 @@ import java.util.TooManyListenersException;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -68,6 +67,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.FailableFunction;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.meeuw.functional.Predicates;
 import org.zeroturnaround.zip.ZipEntryCallback;
@@ -681,7 +681,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			try {
 				//
-				ci = new ContentInfoUtil().findMatch(file);
+				ci = testAndApply(f -> exists(f) && isFile(f), file, new ContentInfoUtil()::findMatch, null);
 				//
 			} catch (final IOException e) {
 				// TODO Auto-generated catch block
@@ -698,8 +698,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			try {
 				//
-				setText(jtc, Boolean.toString(ZipUtil.replaceEntry(fileJar, getName(IterableUtils.get(collection, 0)),
-						FileUtils.readFileToByteArray(file), cm)));
+				setText(jtc, toString(testAndApply(Objects::nonNull,
+						testAndApply(Objects::nonNull, file, FileUtils::readFileToByteArray, null),
+						x -> ZipUtil.replaceEntry(fileJar, getName(IterableUtils.get(collection, 0)), x, cm), null)));
 				//
 			} catch (final IOException e) {
 				// TODO Auto-generated catch block
@@ -708,6 +709,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static String toString(final Object instance) {
+		return instance != null ? instance.toString() : null;
 	}
 
 	private static void addJavaClassIntoZipFile(final File file, final File fileJar, final JTextComponent jtc,
@@ -751,12 +756,13 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		return instance != null ? instance.getMimeType() : null;
 	}
 
-	private static <T, R> R testAndApply(final Predicate<T> predicate, final T value, final Function<T, R> functionTrue,
-			final Function<T, R> functionFalse) {
+	private static <T, R, E extends Throwable> R testAndApply(final Predicate<T> predicate, final T value,
+			final FailableFunction<T, R, E> functionTrue, final FailableFunction<T, R, E> functionFalse) throws E {
 		return test(predicate, value) ? apply(functionTrue, value) : apply(functionFalse, value);
 	}
 
-	private static <T, R> R apply(final Function<T, R> instance, final T value) {
+	private static <T, R, E extends Throwable> R apply(final FailableFunction<T, R, E> instance, final T value)
+			throws E {
 		return instance != null ? instance.apply(value) : null;
 	}
 

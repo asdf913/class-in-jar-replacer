@@ -3,11 +3,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -26,7 +26,8 @@ import io.github.toolfactory.narcissus.Narcissus;
 
 class ClassInJarReplacerTest {
 
-	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_UPDATE_ZIP_ENTRY = null;
+	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
+			METHOD_UPDATE_ZIP_ENTRY5 = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -39,8 +40,13 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_GET_CLASS = clz.getDeclaredMethod("getClass", Object.class)).setAccessible(true);
 		//
-		(METHOD_UPDATE_ZIP_ENTRY = clz.getDeclaredMethod("updateZipEntry", File.class, JTextComponent.class, File.class,
-				Number.class)).setAccessible(true);
+		(METHOD_TO_STRING = clz.getDeclaredMethod("toString", Object.class)).setAccessible(true);
+		//
+		(METHOD_UPDATE_ZIP_ENTRY4 = clz.getDeclaredMethod("updateZipEntry", File.class, JTextComponent.class,
+				File.class, Number.class)).setAccessible(true);
+		//
+		(METHOD_UPDATE_ZIP_ENTRY5 = clz.getDeclaredMethod("updateZipEntry", File.class, File.class, Collection.class,
+				JTextComponent.class, Integer.TYPE)).setAccessible(true);
 		//
 	}
 
@@ -164,8 +170,27 @@ class ClassInJarReplacerTest {
 		}
 	}
 
-	private static String toString(final Object instance) {
-		return instance != null ? instance.toString() : null;
+	@Test
+	void testToString() throws Throwable {
+		//
+		final String string = "";
+		//
+		Assertions.assertSame(string, toString(string));
+		//
+	}
+
+	private static String toString(final Object instance) throws Throwable {
+		try {
+			final Object obj = METHOD_TO_STRING.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
 	}
 
 	@Test
@@ -188,6 +213,14 @@ class ClassInJarReplacerTest {
 		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, null, null));
 		//
 		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, filePomXml, null));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(null, null, null, null, 0));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(new File("."), null, null, null, 0));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, Collections.emptyList(), null, 0));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(null, null, Collections.singleton(null), null, 0));
 		//
 	}
 
@@ -213,7 +246,16 @@ class ClassInJarReplacerTest {
 	private static void updateZipEntry(final File fileJar, final JTextComponent jtc, final File file,
 			final Number compressionMethod) throws Throwable {
 		try {
-			METHOD_UPDATE_ZIP_ENTRY.invoke(null, fileJar, jtc, file, compressionMethod);
+			METHOD_UPDATE_ZIP_ENTRY4.invoke(null, fileJar, jtc, file, compressionMethod);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static void updateZipEntry(final File file, final File fileJar, final Collection<ZipEntry> collection,
+			final JTextComponent jtc, final int cm) throws Throwable {
+		try {
+			METHOD_UPDATE_ZIP_ENTRY5.invoke(null, file, fileJar, collection, jtc, cm);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
