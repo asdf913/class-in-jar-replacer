@@ -618,9 +618,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
-		final Collection<ZipEntry> collection = names != null && names.containsKey(file.getName())
-				? names.get(file.getName())
-				: null;
+		final Collection<ZipEntry> collection = containsKey(names, file.getName()) ? get(names, file.getName()) : null;
 		//
 		final int cm = intValue(compressionMethod, 0);
 		//
@@ -684,6 +682,14 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static boolean containsKey(final Multimap<?, ?> instance, final Object key) {
+		return instance != null && instance.containsKey(key);
+	}
+
+	private static <K, V> Collection<V> get(final Multimap<K, V> instance, final K key) {
+		return instance != null ? instance.get(key) : null;
 	}
 
 	private static int intValue(final Number instance, final int defaultValue) {
