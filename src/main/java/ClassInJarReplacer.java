@@ -517,14 +517,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 					//
 					list = cast(List.class, transferable != null ? transferable.getTransferData(dataFlavour) : null);
 					//
-				} catch (final UnsupportedFlavorException e) {
+				} catch (final UnsupportedFlavorException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} catch (final IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//
+				} // try
+					//
 			} else {
 				//
 				throw new IllegalStateException();
