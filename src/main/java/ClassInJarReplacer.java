@@ -622,7 +622,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			return;
 			//
-		} else if (!Objects.equals(ci.getMimeType(), "application/zip")) {
+		} else if (!Objects.equals(getMimeType(ci), "application/zip")) {
 			//
 			JOptionPane.showMessageDialog(null, "Please drop a ZIP file");
 			//
@@ -660,7 +660,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				e.printStackTrace();
 			} // try
 				//
-			if (Objects.equals(ci != null ? ci.getMimeType() : null, "application/x-java-applet")) {
+			if (Objects.equals(getMimeType(ci), "application/x-java-applet")) {
 				//
 				JavaClass javaClass = null;
 				//
@@ -709,6 +709,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static String getMimeType(final ContentInfo instance) {
+		return instance != null ? instance.getMimeType() : null;
 	}
 
 	private static <T, R> R testAndApply(final Predicate<T> predicate, final T value, final Function<T, R> functionTrue,
