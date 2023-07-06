@@ -372,7 +372,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			final File file = getFile(getList(getTransferable(dtde)));
 			//
-			final String absolutePath = file != null ? file.getAbsolutePath() : null;
+			final String absolutePath = getAbsolutePath(file);
 			//
 			if (!exists(file)) {
 				//
@@ -400,7 +400,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			final File file = getFile(getList(getTransferable(dtde)));
 			//
-			final String absolutePath = file != null ? file.getAbsolutePath() : null;
+			final String absolutePath = getAbsolutePath(file);
 			//
 			if (!exists(file)) {
 				//
