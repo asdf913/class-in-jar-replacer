@@ -379,12 +379,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			if (!exists(file)) {
 				//
-				if (!GraphicsEnvironment.isHeadless()) {
-					//
-					JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
-					//
-				} // if
-					//
+				testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null),
+						String.format("%1$s not exist", absolutePath), x -> JOptionPane.showMessageDialog(null, x));
+				//
 				return;
 				//
 			} else if (!file.isFile()) {
@@ -451,12 +448,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (list == null || list.isEmpty()) {
 			//
-			if (!GraphicsEnvironment.isHeadless()) {
-				//
-				JOptionPane.showMessageDialog(null, "Pleaes drop a file");
-				//
-			} // if
-				//
+			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Pleaes drop a file",
+					x -> JOptionPane.showMessageDialog(null, x));
+			//
 			return null;
 			//
 		} else if (list.size() > 1) {
@@ -564,12 +558,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (fileJar == null || !exists(fileJar) || !fileJar.isFile()) {
 			//
-			if (!GraphicsEnvironment.isHeadless()) {
-				//
-				JOptionPane.showMessageDialog(null, "Please drap a Jar File");
-				//
-			} // if
-				//
+			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Please drap a Jar File",
+					x -> JOptionPane.showMessageDialog(null, x));
+			//
 			return;
 			//
 		} // if
