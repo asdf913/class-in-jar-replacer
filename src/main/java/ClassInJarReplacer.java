@@ -262,9 +262,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			} else if (in instanceof IF_ICMPEQ) {
 				//
-				final ConstantPushInstruction cpi = i > 1 ? cast(ConstantPushInstruction.class, ins[i - 1]) : null;
-				//
-				final Number value = cpi != null ? cpi.getValue() : null;
+				final Number value = getValue(i > 1 ? cast(ConstantPushInstruction.class, ins[i - 1]) : null);
 				//
 				if (value != null) {
 					//
@@ -284,6 +282,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		return ints;
 		//
+	}
+
+	private static Number getValue(final ConstantPushInstruction instance) {
+		return instance != null ? instance.getValue() : null;
 	}
 
 	private static Instruction[] getInstructions(final InstructionList instance) {
