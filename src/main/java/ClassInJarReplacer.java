@@ -380,18 +380,18 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			acceptDrop(dtde, DnDConstants.ACTION_COPY_OR_MOVE);
 			//
-			final File file = getFile(getList(getTransferable(dtde)));
+			final File f = getFile(getList(getTransferable(dtde)));
 			//
-			final String absolutePath = getAbsolutePath(file);
+			final String absolutePath = getAbsolutePath(f);
 			//
-			if (!exists(file)) {
+			if (!exists(f)) {
 				//
 				testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null),
 						String.format("%1$s not exist", absolutePath), x -> JOptionPane.showMessageDialog(null, x));
 				//
 				return;
 				//
-			} else if (!isFile(file)) {
+			} else if (!isFile(f)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
 				//
@@ -399,23 +399,23 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			} // if
 				//
-			setText(jtfFileJar, getAbsolutePath(fileJar = file));
+			setText(jtfFileJar, getAbsolutePath(fileJar = f));
 			//
 		} else if (Objects.equals(source, dtFile)) {
 			//
 			acceptDrop(dtde, DnDConstants.ACTION_COPY_OR_MOVE);
 			//
-			final File file = getFile(getList(getTransferable(dtde)));
+			final File f = getFile(getList(getTransferable(dtde)));
 			//
-			final String absolutePath = getAbsolutePath(file);
+			final String absolutePath = getAbsolutePath(f);
 			//
-			if (!exists(file)) {
+			if (!exists(f)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
 				//
 				return;
 				//
-			} else if (!isFile(file)) {
+			} else if (!isFile(f)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
 				//
@@ -423,11 +423,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			} // if
 				//
-			setText(jtfFile, getAbsolutePath(this.file = file));
+			setText(jtfFile, getAbsolutePath(this.file = f));
 			//
 			if (jcbAuto != null && jcbAuto.isSelected()) {
 				//
-				updateZipEntry(fileJar, jtfResult, file, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
+				updateZipEntry(fileJar, jtfResult, f, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
 				//
 			} // if
 				//
