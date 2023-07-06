@@ -239,9 +239,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		try (final InputStream is = ZipEntry.class.getResourceAsStream(
 				String.format("/%1$s.class", StringUtils.replace(ZipEntry.class.getName(), ".", "/")))) {
 			//
-			method = (javaClass = new ClassParser(is, null).parse()) != null
-					? javaClass.getMethod(ZipEntry.class.getDeclaredMethod("setMethod", Integer.TYPE))
-					: null;
+			method = getMethod(javaClass = new ClassParser(is, null).parse(),
+					ZipEntry.class.getDeclaredMethod("setMethod", Integer.TYPE));
 			//
 		} catch (final IOException | NoSuchMethodException e) {
 			// TODO Auto-generated catch block
@@ -289,6 +288,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		return ints;
 		//
+	}
+
+	private static Method getMethod(final JavaClass instance, final java.lang.reflect.Method method) {
+		return instance != null ? instance.getMethod(method) : null;
 	}
 
 	private static void setEditable(final boolean flag, final JTextComponent a, final JTextComponent b,
