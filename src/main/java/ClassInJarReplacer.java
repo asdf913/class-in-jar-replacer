@@ -394,15 +394,19 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 	}
 
 	public void dragEnter(final DropTargetDragEvent dtde) {
+		//
 	}
 
 	public void dragOver(final DropTargetDragEvent dtde) {
+		//
 	}
 
 	public void dropActionChanged(final DropTargetDragEvent dtde) {
+		//
 	}
 
 	public void dragExit(final DropTargetEvent dte) {
+		//
 	}
 
 	public void drop(final DropTargetDropEvent dtde) {
