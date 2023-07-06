@@ -47,6 +47,7 @@ import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 
 import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ATHROW;
@@ -246,8 +247,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			e.printStackTrace();
 		} // try
 			//
-		final MethodGen mg = new MethodGen(method, null,
-				new ConstantPoolGen(javaClass != null ? javaClass.getConstantPool() : null));
+		final MethodGen mg = new MethodGen(method, null, new ConstantPoolGen(getConstantPool(javaClass)));
 		//
 		final InstructionList il = mg.getInstructionList();
 		//
@@ -287,6 +287,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		return ints;
 		//
+	}
+
+	private static ConstantPool getConstantPool(final JavaClass instance) {
+		return instance != null ? instance.getConstantPool() : null;
 	}
 
 	private static Method getMethod(final JavaClass instance, final java.lang.reflect.Method method) {
