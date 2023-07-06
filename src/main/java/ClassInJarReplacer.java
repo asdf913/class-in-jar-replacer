@@ -607,9 +607,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setText(jtc, null);
 		//
+		final boolean isGui = !GraphicsEnvironment.isHeadless();
+		//
 		if (Boolean.logicalOr(!exists(fileJar), !isFile(fileJar))) {
 			//
-			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Please drap a Jar File",
+			testAndAccept(Predicates.always(isGui, null), "Please drap a Jar File",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
@@ -635,7 +637,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		} else if (!Objects.equals(getMimeType(ci), "application/zip")) {
 			//
-			JOptionPane.showMessageDialog(null, "Please drop a ZIP file");
+			testAndAccept(Predicates.always(isGui, null), "Please drop a ZIP file",
+					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
 			//
@@ -643,7 +646,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		if (Boolean.logicalOr(!exists(file), !isFile(file))) {
 			//
-			JOptionPane.showMessageDialog(null, "Please drap a File");
+			testAndAccept(Predicates.always(isGui, null), "Please drap a File",
+					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
 			//
@@ -651,8 +655,16 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		final ZipEntryCallbackImpl zecb = new ZipEntryCallbackImpl();
 		//
-		ZipUtil.iterate(fileJar, zecb);
-		//
+		try {
+			//
+			ZipUtil.iterate(fileJar, zecb);
+			//
+		} catch (final Exception e) {
+			//
+			e.printStackTrace();
+			//
+		} // try
+			//
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
 		updateZipEntry(file, fileJar, testAndApply(x -> containsKey(names, x), getName(file), x -> get(names, x), null),

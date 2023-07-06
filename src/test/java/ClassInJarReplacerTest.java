@@ -1,13 +1,22 @@
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import javax.swing.text.JTextComponent;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +26,7 @@ import io.github.toolfactory.narcissus.Narcissus;
 
 class ClassInJarReplacerTest {
 
-	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS = null;
+	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_UPDATE_ZIP_ENTRY = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -29,6 +38,9 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_FILE = clz.getDeclaredMethod("getFile", List.class)).setAccessible(true);
 		//
 		(METHOD_GET_CLASS = clz.getDeclaredMethod("getClass", Object.class)).setAccessible(true);
+		//
+		(METHOD_UPDATE_ZIP_ENTRY = clz.getDeclaredMethod("updateZipEntry", File.class, JTextComponent.class, File.class,
+				Number.class)).setAccessible(true);
 		//
 	}
 
@@ -154,6 +166,57 @@ class ClassInJarReplacerTest {
 
 	private static String toString(final Object instance) {
 		return instance != null ? instance.toString() : null;
+	}
+
+	@Test
+	void testUpdateZipEntry() throws IOException {
+		//
+		final File filePomXml = new File("pom.xml");
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, null, null));
+		//
+		final File fileZip = File.createTempFile(RandomStringUtils.randomAlphanumeric(3), null);
+		//
+		if (fileZip != null) {
+			//
+			fileZip.deleteOnExit();
+			//
+		} // if
+			//
+		FileUtils.writeByteArrayToFile(fileZip, crateZipAsByteArray("a.b", "".getBytes()));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, null, null));
+		//
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, filePomXml, null));
+		//
+	}
+
+	private static byte[] crateZipAsByteArray(final String filename, final byte[] content) throws IOException {
+		//
+		try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				final ZipOutputStream zip = new ZipOutputStream(baos)) {
+			//
+			zip.putNextEntry(new ZipEntry(filename));
+			//
+			zip.write(content, 0, content != null ? content.length : 0);
+			//
+			zip.closeEntry();
+			//
+			zip.flush();
+			//
+			return baos.toByteArray();
+			//
+		} // try
+			//
+	}
+
+	private static void updateZipEntry(final File fileJar, final JTextComponent jtc, final File file,
+			final Number compressionMethod) throws Throwable {
+		try {
+			METHOD_UPDATE_ZIP_ENTRY.invoke(null, fileJar, jtc, file, compressionMethod);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
 	}
 
 }
