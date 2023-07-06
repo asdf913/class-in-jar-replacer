@@ -81,8 +81,6 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	private static final long serialVersionUID = -2027349858511726609L;
 
-	private JPanel jpFileJar, jpFile = null;
-
 	private DropTarget dtFileJar, dtFile = null;
 
 	private File fileJar, file = null;
@@ -127,29 +125,31 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final int height = 300;
 		//
-		testAndAccept(biPredicate, jpFileJar = new JPanel(),
+		JPanel jp = null;
+		//
+		testAndAccept(biPredicate, jp = new JPanel(),
 				String.format("wmin %1$s,hmin %2$s,%3$s,span %4$s", width, height, growx, span), this::add);
 		//
 		final Border border = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.BLACK);
 		//
-		jpFileJar.setBorder(border);
+		jp.setBorder(border);
 		//
 		if (isGui) {
 			//
-			jpFileJar.setDropTarget(dtFileJar = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
+			jp.setDropTarget(dtFileJar = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
 			//
 		} // if
 			//
 		addDropTargetListener(dtFileJar, this);
 		//
-		testAndAccept(biPredicate, jpFile = new JPanel(),
+		testAndAccept(biPredicate, jp = new JPanel(),
 				String.format("wmin %1$s,hmin %2$s,%3$s,%4$s", width, height, growx, wrap), this::add);
 		//
-		jpFile.setBorder(border);
+		jp.setBorder(border);
 		//
 		if (isGui) {
 			//
-			jpFile.setDropTarget(dtFile = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
+			jp.setDropTarget(dtFile = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
 			//
 		} // if
 			//
