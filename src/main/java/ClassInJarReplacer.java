@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.TooManyListenersException;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -61,7 +62,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.function.FailableConsumer;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.meeuw.functional.Predicates;
 import org.zeroturnaround.zip.ZipEntryCallback;
@@ -212,8 +212,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		return instance != null ? instance.getName() : null;
 	}
 
-	private static <T, E extends Throwable> void testAndAccept(final Predicate<T> predicate, final T value,
-			final FailableConsumer<T, E> consumer) throws E {
+	private static <T> void testAndAccept(final Predicate<T> predicate, final T value, final Consumer<T> consumer) {
 		if (test(predicate, value) && consumer != null) {
 			consumer.accept(value);
 		}
