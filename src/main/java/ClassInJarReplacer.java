@@ -29,7 +29,6 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.Objects;
 import java.util.TooManyListenersException;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -50,6 +49,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 
+import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
@@ -67,6 +67,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.FailableBiConsumer;
 import org.apache.commons.lang3.function.FailableFunction;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.meeuw.functional.Predicates;
@@ -253,8 +254,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		return instance != null && instance.test(value);
 	}
 
-	private static <T, U> void testAndAccept(final BiPredicate<T, U> predicate, final T t, final U u,
-			final BiConsumer<T, U> consumer) {
+	private static <T, U, E extends Throwable> void testAndAccept(final BiPredicate<T, U> predicate, final T t,
+			final U u, final FailableBiConsumer<T, U, E> consumer) throws E {
 		if (predicate != null && predicate.test(t, u) && consumer != null) {
 			consumer.accept(t, u);
 		}
@@ -720,9 +721,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		JavaClass javaClass = null;
 		//
-		try (final InputStream is = new FileInputStream(file)) {
+		try (final InputStream is = testAndApply(f -> exists(f) && isFile(f), file, FileInputStream::new, null)) {
 			//
-			javaClass = new ClassParser(is, null).parse();
+			javaClass = parse(testAndApply(x -> x != null, is, x -> new ClassParser(x, null), null));
 			//
 		} catch (final Throwable throwable) {
 			// TODO Auto-generated catch block
@@ -733,13 +734,15 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			try {
 				//
-				ZipUtil.addEntry(fileJar,
-						String.format("%1$s.class", StringUtils.replace(javaClass.getClassName(), ".", "/")),
-						FileUtils.readFileToByteArray(file), cm);
+				testAndAccept((a, b) -> a != null, fileJar, javaClass,
+						(a, b) -> ZipUtil.addEntry(a,
+								String.format("%1$s.class",
+										StringUtils.replace(b != null ? b.getClassName() : null, ".", "/")),
+								FileUtils.readFileToByteArray(file), cm));
 				//
 				setText(jtc, Boolean.toString(true));
 				//
-			} catch (final IOException e) {
+			} catch (final Exception e) {
 				//
 				setText(jtc, Boolean.toString(false));
 				//
@@ -750,6 +753,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static JavaClass parse(final ClassParser instance) throws IOException, ClassFormatException {
+		return instance != null ? instance.parse() : null;
 	}
 
 	private static String getMimeType(final ContentInfo instance) {

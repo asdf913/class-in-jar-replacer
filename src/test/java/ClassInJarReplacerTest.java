@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,6 +18,7 @@ import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +29,7 @@ import io.github.toolfactory.narcissus.Narcissus;
 class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
-			METHOD_UPDATE_ZIP_ENTRY5 = null;
+			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -46,6 +48,9 @@ class ClassInJarReplacerTest {
 				File.class, Number.class)).setAccessible(true);
 		//
 		(METHOD_UPDATE_ZIP_ENTRY5 = clz.getDeclaredMethod("updateZipEntry", File.class, File.class, Collection.class,
+				JTextComponent.class, Integer.TYPE)).setAccessible(true);
+		//
+		(METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE = clz.getDeclaredMethod("addJavaClassIntoZipFile", File.class, File.class,
 				JTextComponent.class, Integer.TYPE)).setAccessible(true);
 		//
 	}
@@ -256,6 +261,56 @@ class ClassInJarReplacerTest {
 			final JTextComponent jtc, final int cm) throws Throwable {
 		try {
 			METHOD_UPDATE_ZIP_ENTRY5.invoke(null, file, fileJar, collection, jtc, cm);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testAddJavaClassIntoZipFile() throws IOException {
+		//
+		Assertions.assertDoesNotThrow(() -> addJavaClassIntoZipFile(null, null, null, 0));
+		//
+		Assertions.assertDoesNotThrow(() -> addJavaClassIntoZipFile(new File("."), null, null, 0));
+		//
+		final Class<?> c = Class.class;
+		//
+		try (final InputStream is = c
+				.getResourceAsStream(String.format("/%1$s.class", StringUtils.replace(c.getName(), ".", "/")))) {
+			//
+			final File file = File.createTempFile(RandomStringUtils.randomAlphanumeric(3), null);
+			//
+			if (file != null) {
+				//
+				file.deleteOnExit();
+				//
+			} // if
+				//
+				//
+			FileUtils.copyInputStreamToFile(is, file);
+			//
+			Assertions.assertDoesNotThrow(() -> addJavaClassIntoZipFile(file, null, null, 0));
+			//
+			final File fileZip = File.createTempFile(RandomStringUtils.randomAlphanumeric(3), null);
+			//
+			if (fileZip != null) {
+				//
+				fileZip.deleteOnExit();
+				//
+			} // if
+				//
+			FileUtils.writeByteArrayToFile(fileZip, crateZipAsByteArray("a.b", "".getBytes()));
+			//
+			Assertions.assertDoesNotThrow(() -> addJavaClassIntoZipFile(file, fileZip, null, 0));
+			//
+		} // try
+			//
+	}
+
+	private static void addJavaClassIntoZipFile(final File file, final File fileJar, final JTextComponent jtc,
+			final int cm) throws Throwable {
+		try {
+			METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE.invoke(null, file, fileJar, jtc, cm);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
