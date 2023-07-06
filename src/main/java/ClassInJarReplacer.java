@@ -1,4 +1,6 @@
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.GraphicsEnvironment;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -14,11 +16,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Member;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.TooManyListenersException;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
 import javax.swing.AbstractButton;
@@ -50,6 +59,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.FailableConsumer;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.meeuw.functional.Predicates;
 import org.zeroturnaround.zip.ZipEntryCallback;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -58,6 +70,7 @@ import com.google.common.collect.Multimap;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 
+import io.github.toolfactory.narcissus.Narcissus;
 import net.miginfocom.swing.MigLayout;
 
 public class ClassInJarReplacer extends JFrame implements DropTargetListener, ActionListener {
@@ -81,13 +94,26 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	private void init() throws TooManyListenersException {
 		//
+		// If "java.awt.Container.component" is null, return this method immediately
+		//
+		// The below check is for "-Djava.awt.headless=true"
+		//
+		final List<Field> fs = toList(filter(stream(FieldUtils.getAllFieldsList(getClass(this))),
+				f -> Objects.equals(getName(f), "component")));
+		//
+		final Field f = IterableUtils.size(fs) == 1 ? IterableUtils.get(fs, 0) : null;
+		//
+		final boolean isGui = f == null || Narcissus.getObjectField(this, f) != null;
+		//
+		final BiPredicate<Component, Object> biPredicate = Predicates.biAlways(isGui, null);
+		//
 		final int span = 4;
 		//
-		add(new JLabel("Jar"), String.format("span %1$s", span));
+		testAndAccept(biPredicate, new JLabel("Jar"), String.format("span %1$s", span), this::add);
 		//
 		final String wrap = "wrap";
 		//
-		add(new JLabel("File"), wrap);
+		testAndAccept(biPredicate, new JLabel("File"), wrap, this::add);
 		//
 		// File Drop Area
 		//
@@ -97,47 +123,109 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final int height = 300;
 		//
-		add(jpFileJar = new JPanel(), String.format("wmin %1$s,hmin %2$s,%3$s,span %4$s", width, height, growx, span));
+		testAndAccept(biPredicate, jpFileJar = new JPanel(),
+				String.format("wmin %1$s,hmin %2$s,%3$s,span %4$s", width, height, growx, span), this::add);
 		//
 		final Border border = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.BLACK);
 		//
 		jpFileJar.setBorder(border);
 		//
-		jpFileJar.setDropTarget(dtFileJar = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
+		if (isGui) {
+			//
+			jpFileJar.setDropTarget(dtFileJar = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
+			//
+		} // if
+			//
+		addDropTargetListener(dtFileJar, this);
 		//
-		dtFileJar.addDropTargetListener(this);
-		//
-		add(jpFile = new JPanel(), String.format("wmin %1$s,hmin %2$s,%3$s,%4$s", width, height, growx, wrap));
+		testAndAccept(biPredicate, jpFile = new JPanel(),
+				String.format("wmin %1$s,hmin %2$s,%3$s,%4$s", width, height, growx, wrap), this::add);
 		//
 		jpFile.setBorder(border);
 		//
-		jpFile.setDropTarget(dtFile = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
-		//
-		dtFile.addDropTargetListener(this);
+		if (isGui) {
+			//
+			jpFile.setDropTarget(dtFile = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
+			//
+		} // if
+			//
+		addDropTargetListener(dtFile, this);
 		//
 		// File Path
 		//
-		add(jtfFileJar = new JTextField(), String.format("span %1$s,%2$s", span, growx));
+		testAndAccept(biPredicate, jtfFileJar = new JTextField(), String.format("span %1$s,%2$s", span, growx),
+				this::add);
 		//
-		add(jtfFile = new JTextField(), String.format("%1$s,%2$s", growx, wrap));
+		testAndAccept(biPredicate, jtfFile = new JTextField(), String.format("%1$s,%2$s", growx, wrap), this::add);
 		//
 		// Button
 		//
-		add(jcbAuto = new JCheckBox("Auto"));
+		final Predicate<Component> predicate = Predicates.always(isGui, null);
 		//
-		add(jcbCompressionLevel = new JComboBox<>(
-				Arrays.stream(getCompressionMethods()).boxed().toArray(Integer[]::new)));
+		testAndAccept(predicate, jcbAuto = new JCheckBox("Auto"), this::add);
+		//
+		testAndAccept(predicate, jcbCompressionLevel = new JComboBox<>(
+				Arrays.stream(getCompressionMethods()).boxed().toArray(Integer[]::new)), this::add);
 		//
 		jcbCompressionLevel.setToolTipText("Compression Method");
 		//
-		add(jbExecute = new JButton("Execute"));
+		testAndAccept(predicate, jbExecute = new JButton("Execute"), this::add);
 		//
 		jbExecute.addActionListener(this);
 		//
-		add(jtfResult = new JTextField(), String.format("%1$s,wmin %2$s", growx, 50));
+		testAndAccept(biPredicate, jtfResult = new JTextField(), String.format("%1$s,wmin %2$s", growx, 50), this::add);
 		//
 		setEditable(false, jtfFileJar, jtfFile, jtfResult);
 		//
+	}
+
+	private static void addDropTargetListener(final DropTarget instance, final DropTargetListener dropTargetListener)
+			throws TooManyListenersException {
+		if (instance != null) {
+			instance.addDropTargetListener(dropTargetListener);
+		}
+	}
+
+	private static Class<?> getClass(final Object instance) {
+		return instance != null ? instance.getClass() : null;
+	}
+
+	private static <E> Stream<E> stream(final Collection<E> instance) {
+		return instance != null ? instance.stream() : null;
+	}
+
+	private static <T> Stream<T> filter(final Stream<T> instance, final Predicate<? super T> predicate) {
+		//
+		return instance != null && (predicate != null || Proxy.isProxyClass(getClass(instance)))
+				? instance.filter(predicate)
+				: null;
+		//
+	}
+
+	private static <T> List<T> toList(final Stream<T> instance) {
+		return instance != null ? instance.toList() : null;
+	}
+
+	private static String getName(final Member instance) {
+		return instance != null ? instance.getName() : null;
+	}
+
+	private static <T, E extends Throwable> void testAndAccept(final Predicate<T> predicate, final T value,
+			final FailableConsumer<T, E> consumer) throws E {
+		if (test(predicate, value) && consumer != null) {
+			consumer.accept(value);
+		}
+	}
+
+	private static final <T> boolean test(final Predicate<T> instance, final T value) {
+		return instance != null && instance.test(value);
+	}
+
+	private static <T, U> void testAndAccept(final BiPredicate<T, U> predicate, final T t, final U u,
+			final BiConsumer<T, U> consumer) {
+		if (predicate != null && predicate.test(t, u) && consumer != null) {
+			consumer.accept(t, u);
+		}
 	}
 
 	private static int[] getCompressionMethods() {
@@ -224,7 +312,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	public static void main(final String[] args) throws TooManyListenersException {
 		//
-		final ClassInJarReplacer instance = new ClassInJarReplacer();
+		final ClassInJarReplacer instance = GraphicsEnvironment.isHeadless()
+				? cast(ClassInJarReplacer.class, Narcissus.allocateInstance(ClassInJarReplacer.class))
+				: new ClassInJarReplacer();
 		//
 		instance.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//
@@ -232,10 +322,30 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		instance.init();
 		//
-		instance.pack();
+		final boolean isHeadless = GraphicsEnvironment.isHeadless();
 		//
-		instance.setVisible(true);
+		if (Boolean.logicalAnd(!isHeadless, !isUnderDebugOrMaven())) {
+			//
+			instance.pack();
+			//
+			instance.setVisible(true);
+			//
+		} // if
+			//
+	}
+
+	private static boolean isUnderDebugOrMaven() {
 		//
+		return Arrays.stream(new Throwable().getStackTrace())
+				.anyMatch(x -> Arrays
+						.asList("org.eclipse.jdt.internal.junit5.runner.JUnit5TestReference",
+								"org.apache.maven.surefire.junitplatform.JUnitPlatformProvider")
+						.contains(getClassName(x)));
+		//
+	}
+
+	private static String getClassName(final StackTraceElement instance) {
+		return instance != null ? instance.getClassName() : null;
 	}
 
 	public void dragEnter(final DropTargetDragEvent dtde) {
@@ -262,10 +372,14 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			final String absolutePath = file != null ? file.getAbsolutePath() : null;
 			//
-			if (!file.exists()) {
+			if (!exists(file)) {
 				//
-				JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
-				//
+				if (!GraphicsEnvironment.isHeadless()) {
+					//
+					JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
+					//
+				} // if
+					//
 				return;
 				//
 			} else if (!file.isFile()) {
@@ -286,7 +400,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			final String absolutePath = file != null ? file.getAbsolutePath() : null;
 			//
-			if (!file.exists()) {
+			if (!exists(file)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
 				//
@@ -312,6 +426,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 	}
 
+	private static boolean exists(final File instance) {
+		return instance != null && instance.exists();
+	}
+
 	private static Object getSelectedItem(final JComboBox<?> instance) {
 		return instance != null ? instance.getSelectedItem() : null;
 	}
@@ -324,8 +442,12 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (list == null || list.isEmpty()) {
 			//
-			JOptionPane.showMessageDialog(null, "Pleaes drop a file");
-			//
+			if (!GraphicsEnvironment.isHeadless()) {
+				//
+				JOptionPane.showMessageDialog(null, "Pleaes drop a file");
+				//
+			} // if
+				//
 			return null;
 			//
 		} else if (list.size() > 1) {
@@ -434,10 +556,14 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setText(jtc, null);
 		//
-		if (fileJar == null || !fileJar.exists() || !fileJar.isFile()) {
+		if (fileJar == null || !exists(fileJar) || !fileJar.isFile()) {
 			//
-			JOptionPane.showMessageDialog(null, "Please drap a Jar File");
-			//
+			if (!GraphicsEnvironment.isHeadless()) {
+				//
+				JOptionPane.showMessageDialog(null, "Please drap a Jar File");
+				//
+			} // if
+				//
 			return;
 			//
 		} // if
@@ -467,7 +593,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		} // if
 			//
-		if (file == null || !file.exists() || !file.isFile()) {
+		if (file == null || !exists(file) || !file.isFile()) {
 			//
 			JOptionPane.showMessageDialog(null, "Please drap a File");
 			//
