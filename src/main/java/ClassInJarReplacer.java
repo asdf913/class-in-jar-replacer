@@ -387,7 +387,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 				return;
 				//
-			} else if (!file.isFile()) {
+			} else if (!isFile(file)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
 				//
@@ -411,7 +411,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 				return;
 				//
-			} else if (!file.isFile()) {
+			} else if (!isFile(file)) {
 				//
 				JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
 				//
@@ -437,6 +437,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	private static boolean exists(final File instance) {
 		return instance != null && instance.exists();
+	}
+
+	private static boolean isFile(final File instance) {
+		return instance != null && instance.isFile();
 	}
 
 	private static Object getSelectedItem(final JComboBox<?> instance) {
@@ -559,7 +563,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setText(jtc, null);
 		//
-		if (fileJar == null || !exists(fileJar) || !fileJar.isFile()) {
+		if (!exists(fileJar) || !isFile(fileJar)) {
 			//
 			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Please drap a Jar File",
 					x -> JOptionPane.showMessageDialog(null, x));
@@ -593,7 +597,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		} // if
 			//
-		if (file == null || !exists(file) || !file.isFile()) {
+		if (!exists(file) || !isFile(file)) {
 			//
 			JOptionPane.showMessageDialog(null, "Please drap a File");
 			//
