@@ -247,11 +247,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			e.printStackTrace();
 		} // try
 			//
-		final MethodGen mg = new MethodGen(method, null, new ConstantPoolGen(getConstantPool(javaClass)));
-		//
-		final InstructionList il = mg.getInstructionList();
-		//
-		final Instruction[] ins = il != null ? il.getInstructions() : null;
+		final Instruction[] ins = getInstructions(
+				new MethodGen(method, null, new ConstantPoolGen(getConstantPool(javaClass))).getInstructionList());
 		//
 		Instruction in = null;
 		//
@@ -287,6 +284,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		return ints;
 		//
+	}
+
+	private static Instruction[] getInstructions(final InstructionList instance) {
+		return instance != null ? instance.getInstructions() : null;
 	}
 
 	private static ConstantPool getConstantPool(final JavaClass instance) {
