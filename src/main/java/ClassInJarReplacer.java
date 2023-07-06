@@ -568,7 +568,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setText(jtc, null);
 		//
-		if (!exists(fileJar) || !isFile(fileJar)) {
+		if (Boolean.logicalOr(!exists(fileJar), !isFile(fileJar))) {
 			//
 			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Please drap a Jar File",
 					x -> JOptionPane.showMessageDialog(null, x));
@@ -602,7 +602,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		} // if
 			//
-		if (!exists(file) || !isFile(file)) {
+		if (Boolean.logicalOr(!exists(file), !isFile(file))) {
 			//
 			JOptionPane.showMessageDialog(null, "Please drap a File");
 			//
