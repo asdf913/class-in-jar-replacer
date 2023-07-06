@@ -648,10 +648,15 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
-		final Collection<ZipEntry> collection = testAndApply(x -> containsKey(names, x), getName(file),
-				x -> get(names, x), null);
+		updateZipEntry(file, fileJar, testAndApply(x -> containsKey(names, x), getName(file), x -> get(names, x), null),
+				jtc, intValue(compressionMethod, 0));
 		//
-		final int cm = intValue(compressionMethod, 0);
+	}
+
+	private static void updateZipEntry(final File file, final File fileJar, final Collection<ZipEntry> collection,
+			final JTextComponent jtc, final int cm) {
+		//
+		ContentInfo ci = null;
 		//
 		if (collection == null || collection.isEmpty()) {
 			//
@@ -706,7 +711,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				setText(jtc, Boolean.toString(ZipUtil.replaceEntry(fileJar, getName(IterableUtils.get(collection, 0)),
 						FileUtils.readFileToByteArray(file), cm)));
 				//
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} // try
