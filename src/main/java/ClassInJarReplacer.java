@@ -21,6 +21,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EventObject;
 import java.util.List;
 import java.util.Objects;
 import java.util.TooManyListenersException;
@@ -363,7 +364,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	public void drop(final DropTargetDropEvent dtde) {
 		//
-		final Object source = dtde != null ? dtde.getSource() : null;
+		final Object source = getSource(dtde);
 		//
 		if (Objects.equals(source, dtFileJar)) {
 			//
@@ -425,6 +426,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static Object getSource(final EventObject instance) {
+		return instance != null ? instance.getSource() : null;
 	}
 
 	private static boolean exists(final File instance) {
@@ -544,7 +549,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	public void actionPerformed(final ActionEvent evt) {
 		//
-		if (Objects.equals(evt != null ? evt.getSource() : null, this.jbExecute)) {
+		if (Objects.equals(getSource(evt), this.jbExecute)) {
 			//
 			updateZipEntry(fileJar, jtfResult, file, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
 			//
