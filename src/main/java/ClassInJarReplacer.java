@@ -108,7 +108,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 	@Note("File Jar")
 	private JTextComponent jtfFileJar = null;
 
-	private JTextComponent jtfFile, jtfResult = null;
+	@Note("File")
+	private JTextComponent jtfFile = null;
+
+	@Note("Result")
+	private JTextComponent jtfResult = null;
 
 	@Note("Auto")
 	private AbstractButton jcbAuto = null;
