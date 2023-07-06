@@ -331,10 +331,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			instance.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 			//
+			instance.setLayout(new MigLayout());
+			//
 		} // if
 			//
-		instance.setLayout(new MigLayout());
-		//
 		instance.init();
 		//
 		final boolean isHeadless = GraphicsEnvironment.isHeadless();
@@ -618,7 +618,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
-		final Collection<ZipEntry> collection = containsKey(names, file.getName()) ? get(names, file.getName()) : null;
+		final String name = getName(file);
+		//
+		final Collection<ZipEntry> collection = containsKey(names, name) ? get(names, name) : null;
 		//
 		final int cm = intValue(compressionMethod, 0);
 		//
@@ -682,6 +684,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static String getName(final File instance) {
+		return instance != null ? instance.getName() : null;
 	}
 
 	private static boolean containsKey(final Multimap<?, ?> instance, final Object key) {
