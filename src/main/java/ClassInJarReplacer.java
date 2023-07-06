@@ -492,16 +492,19 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 	private static File getFile(final List<?> list) {
 		//
+		final boolean isGui = !GraphicsEnvironment.isHeadless();
+		//
 		if (list == null || list.isEmpty()) {
 			//
-			testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null), "Pleaes drop a file",
+			testAndAccept(Predicates.always(isGui, null), "Pleaes drop a file",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
 		} else if (list.size() > 1) {
 			//
-			JOptionPane.showMessageDialog(null, "Only one file should be dropped");
+			testAndAccept(Predicates.always(isGui, null), "Only one file should be dropped",
+					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
@@ -511,13 +514,15 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (object == null) {
 			//
-			JOptionPane.showMessageDialog(null, "Please drop null");
+			testAndAccept(Predicates.always(isGui, null), "Please drop null",
+					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
 		} else if (!(object instanceof File)) {
 			//
-			JOptionPane.showMessageDialog(null, String.format("You have dropped %1$s", object.getClass()));
+			testAndAccept(Predicates.always(isGui, null), String.format("You have dropped %1$s", getClass(object)),
+					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
