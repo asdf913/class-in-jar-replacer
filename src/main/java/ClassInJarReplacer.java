@@ -693,7 +693,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 		public void process(final InputStream in, final ZipEntry zipEntry) throws IOException {
 			//
-			if ((entries = ObjectUtils.getIfNull(entries, () -> LinkedListMultimap.create())) != null) {
+			if ((entries = ObjectUtils.getIfNull(entries, LinkedListMultimap::create)) != null) {
 				//
 				final String name = zipEntry != null ? zipEntry.getName() : null;
 				//
