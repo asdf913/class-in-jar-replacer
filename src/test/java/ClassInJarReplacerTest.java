@@ -1,5 +1,7 @@
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetContext;
 import java.awt.dnd.DropTargetDropEvent;
@@ -11,14 +13,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.annotation.Nullable;
 import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FileUtils;
@@ -30,12 +35,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.google.common.reflect.Reflection;
+
 import io.github.toolfactory.narcissus.Narcissus;
 
 class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
-			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE = null;
+			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -59,6 +66,40 @@ class ClassInJarReplacerTest {
 		(METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE = clz.getDeclaredMethod("addJavaClassIntoZipFile", File.class, File.class,
 				JTextComponent.class, Integer.TYPE)).setAccessible(true);
 		//
+		(METHOD_GET_LIST = clz.getDeclaredMethod("getList", Transferable.class)).setAccessible(true);
+		//
+	}
+
+	private static class IH implements InvocationHandler {
+
+		private DataFlavor[] transferDataFlavors = null;
+
+		private Object transferData = null;
+
+		@Override
+		public Object invoke(final Object proxy, @Nullable final Method method, @Nullable final Object[] args)
+				throws Throwable {
+			//
+			final String methodName = method != null ? method.getName() : null;
+			//
+			if (proxy instanceof Transferable) {
+				//
+				if (Objects.equals(methodName, "getTransferDataFlavors")) {
+					//
+					return transferDataFlavors;
+					//
+				} else if (Objects.equals(methodName, "getTransferData")) {
+					//
+					return transferData;
+					//
+				} // if
+					//
+			} // if
+				//
+			throw new Throwable(methodName);
+			//
+		}
+
 	}
 
 	private ClassInJarReplacer instance = null;
@@ -333,6 +374,41 @@ class ClassInJarReplacerTest {
 			final int cm) throws Throwable {
 		try {
 			METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE.invoke(null, file, fileJar, jtc, cm);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetList() throws Throwable {
+		//
+		final IH ih = new IH();
+		//
+		final Transferable transferable = Reflection.newProxy(Transferable.class, ih);
+		//
+		Assertions.assertNull(getList(transferable));
+		//
+		ih.transferDataFlavors = new DataFlavor[] { null };
+		//
+		Assertions.assertNull(getList(transferable));
+		//
+		ih.transferDataFlavors = new DataFlavor[] { DataFlavor.allHtmlFlavor, DataFlavor.javaFileListFlavor };
+		//
+		Assertions.assertNull(getList(transferable));
+		//
+		Assertions.assertSame(ih.transferData = Collections.emptyList(), getList(transferable));
+		//
+	}
+
+	private static List<?> getList(final Transferable transferable) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_LIST.invoke(null, transferable);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof List) {
+				return (List) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
