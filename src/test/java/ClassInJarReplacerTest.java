@@ -1,4 +1,9 @@
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetContext;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
@@ -19,6 +24,7 @@ import javax.swing.text.JTextComponent;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,7 +102,7 @@ class ClassInJarReplacerTest {
 	}
 
 	@Test
-	void testActionPerformed() {
+	void testActionPerformed() throws Throwable {
 		//
 		Assertions.assertDoesNotThrow(() -> actionPerformed(instance, null));
 		//
@@ -111,18 +117,27 @@ class ClassInJarReplacerTest {
 	}
 
 	@Test
-	void testDrop() {
+	void testDrop() throws Throwable {
 		//
-		Assertions.assertDoesNotThrow(() -> {
-			//
-			if (instance != null) {
-				//
-				instance.drop(null);
-				//
-			} // if
-				//
-		});
+		Assertions.assertDoesNotThrow(() -> drop(instance, null));
 		//
+		final DropTarget dtFile = GraphicsEnvironment.isHeadless()
+				? cast(DropTarget.class, Narcissus.allocateInstance(DropTarget.class))
+				: new DropTarget();
+		//
+		FieldUtils.writeDeclaredField(instance, "dtFile", dtFile, true);
+		//
+		final Method method = DropTarget.class.getDeclaredMethod("createDropTargetContext");
+		//
+		Assertions.assertDoesNotThrow(() -> drop(instance, new DropTargetDropEvent(
+				cast(DropTargetContext.class, Narcissus.invokeObjectMethod(dtFile, method)), new Point(), 0, 0)));
+		//
+	}
+
+	private static void drop(final DropTargetListener instance, final DropTargetDropEvent dtde) {
+		if (instance != null) {
+			instance.drop(dtde);
+		}
 	}
 
 	@Test

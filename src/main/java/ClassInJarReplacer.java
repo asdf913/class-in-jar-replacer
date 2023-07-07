@@ -6,6 +6,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetContext;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
@@ -412,6 +413,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final Object source = getSource(dtde);
 		//
+		final boolean isGui = !GraphicsEnvironment.isHeadless();
+		//
 		if (Objects.equals(source, dtFileJar)) {
 			//
 			acceptDrop(dtde, DnDConstants.ACTION_COPY_OR_MOVE);
@@ -422,8 +425,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			if (!exists(f)) {
 				//
-				testAndAccept(Predicates.always(!GraphicsEnvironment.isHeadless(), null),
-						String.format("%1$s not exist", absolutePath), x -> JOptionPane.showMessageDialog(null, x));
+				testAndAccept(Predicates.always(isGui, null), String.format("%1$s not exist", absolutePath),
+						x -> JOptionPane.showMessageDialog(null, x));
 				//
 				return;
 				//
@@ -447,7 +450,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			if (!exists(f)) {
 				//
-				JOptionPane.showMessageDialog(null, String.format("%1$s not exist", absolutePath));
+				testAndAccept(Predicates.always(isGui, null), String.format("%1$s not exist", absolutePath),
+						x -> JOptionPane.showMessageDialog(null, x));
 				//
 				return;
 				//
@@ -540,7 +544,32 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 	}
 
 	private static Transferable getTransferable(final DropTargetDropEvent instance) {
-		return instance != null ? instance.getTransferable() : null;
+		//
+		if (instance == null) {
+			//
+			return null;
+			//
+		} // if
+			//
+		try {
+			//
+			if (Narcissus.getObjectField(instance.getDropTargetContext(),
+					DropTargetContext.class.getDeclaredField("dropTargetContextPeer")) == null) {
+				//
+				return null;
+				//
+			} // if
+				//
+		} catch (final NoSuchFieldException e) {
+			//
+			// TODO Auto-generated catch block
+			//
+			e.printStackTrace();
+			//
+		} // try
+			//
+		return instance.getTransferable();
+		//
 	}
 
 	private static List<?> getList(final Transferable transferable) {
