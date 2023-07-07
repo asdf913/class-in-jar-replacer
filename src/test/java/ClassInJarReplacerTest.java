@@ -86,6 +86,13 @@ class ClassInJarReplacerTest {
 			//
 	}
 
+	@Test
+	void testCast() throws Throwable {
+		//
+		Assertions.assertNull(cast(null, null));
+		//
+	}
+
 	private static <T> T cast(final Class<T> clz, final Object instance) throws Throwable {
 		try {
 			return (T) METHOD_CAST.invoke(null, clz, instance);
