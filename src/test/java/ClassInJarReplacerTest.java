@@ -39,6 +39,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.reflect.Reflection;
 
 import io.github.toolfactory.narcissus.Narcissus;
@@ -48,7 +50,7 @@ class ClassInJarReplacerTest {
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
-			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT = null;
+			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -90,6 +92,8 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_NAME_ZIP_ENTRY = clz.getDeclaredMethod("getName", ZipEntry.class)).setAccessible(true);
 		//
 		(METHOD_SET_TEXT = clz.getDeclaredMethod("setText", JTextComponent.class, String.class)).setAccessible(true);
+		//
+		(METHOD_CONTAINS_KEY = clz.getDeclaredMethod("containsKey", Multimap.class, Object.class)).setAccessible(true);
 		//
 	}
 
@@ -604,6 +608,31 @@ class ClassInJarReplacerTest {
 	private static void setText(final JTextComponent instance, final String text) throws Throwable {
 		try {
 			METHOD_SET_TEXT.invoke(null, instance, text);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testContainsKey() throws Throwable {
+		//
+		Assertions.assertFalse(containsKey(null, null));
+		//
+		Assertions.assertFalse(containsKey(ImmutableListMultimap.of(), null));
+		//
+		final Object key = "";
+		//
+		Assertions.assertTrue(containsKey(ImmutableListMultimap.of(key, key), key));
+		//
+	}
+
+	private static boolean containsKey(final Multimap<?, ?> instance, final Object key) throws Throwable {
+		try {
+			final Object obj = METHOD_CONTAINS_KEY.invoke(null, instance, key);
+			if (obj instanceof Boolean) {
+				return ((Boolean) obj).booleanValue();
+			}
+			throw new Throwable(obj != null && obj.getClass() != null ? obj.getClass().toString() : null);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
