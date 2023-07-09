@@ -62,7 +62,7 @@ class ClassInJarReplacerTest {
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD = null;
+			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -123,6 +123,9 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_GET_METHOD = clz.getDeclaredMethod("getMethod", JavaClass.class, java.lang.reflect.Method.class))
 				.setAccessible(true);
+		//
+		(METHOD_SET_EDITABLE = clz.getDeclaredMethod("setEditable", Boolean.TYPE, JTextComponent.class,
+				JTextComponent.class, JTextComponent[].class)).setAccessible(true);
 		//
 	}
 
@@ -813,6 +816,23 @@ class ClassInJarReplacerTest {
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
+	}
+
+	@Test
+	void testSetEditable() {
+		//
+		Assertions.assertDoesNotThrow(() -> setEditable(false, null, null, (JTextComponent[]) null));
+		//
+	}
+
+	private static void setEditable(final boolean flag, final JTextComponent a, final JTextComponent b,
+			final JTextComponent... bs) throws Throwable {
+		try {
+			METHOD_SET_EDITABLE.invoke(null, flag, a, b, bs);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+
 	}
 
 }
