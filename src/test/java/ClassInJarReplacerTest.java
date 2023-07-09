@@ -33,6 +33,8 @@ import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
 
 import org.apache.bcel.generic.ConstantPushInstruction;
+import org.apache.bcel.generic.Instruction;
+import org.apache.bcel.generic.InstructionList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -57,7 +59,7 @@ class ClassInJarReplacerTest {
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
-			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE = null;
+			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -111,6 +113,8 @@ class ClassInJarReplacerTest {
 				FailableBiConsumer.class)).setAccessible(true);
 		//
 		(METHOD_GET_VALUE = clz.getDeclaredMethod("getValue", ConstantPushInstruction.class)).setAccessible(true);
+		//
+		(METHOD_GET_INSTRUCTIONS = clz.getDeclaredMethod("getInstructions", InstructionList.class)).setAccessible(true);
 		//
 	}
 
@@ -732,6 +736,27 @@ class ClassInJarReplacerTest {
 				return null;
 			} else if (obj instanceof Number) {
 				return (Number) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetInstructions() throws Throwable {
+		//
+		Assertions.assertNull(getInstructions(null));
+		//
+	}
+
+	private static Instruction[] getInstructions(final InstructionList instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_INSTRUCTIONS.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Instruction[]) {
+				return (Instruction[]) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
