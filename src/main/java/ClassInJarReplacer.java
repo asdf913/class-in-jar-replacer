@@ -831,14 +831,17 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 
 		public void process(final InputStream in, final ZipEntry zipEntry) throws IOException {
 			//
-			if ((entries = ObjectUtils.getIfNull(entries, LinkedListMultimap::create)) != null) {
-				//
-				final String name = zipEntry != null ? zipEntry.getName() : null;
-				//
-				entries.put(StringUtils.defaultIfBlank(StringUtils.substringAfterLast(name, "/"), name), zipEntry);
-				//
-			} // if
-				//
+			final String name = getName(zipEntry);
+			//
+			put(entries = ObjectUtils.getIfNull(entries, LinkedListMultimap::create),
+					StringUtils.defaultIfBlank(StringUtils.substringAfterLast(name, "/"), name), zipEntry);
+			//
+		}
+
+		private static <K, V> void put(final Multimap<K, V> instance, final K key, final V value) {
+			if (instance != null) {
+				instance.put(key, value);
+			}
 		}
 
 	}

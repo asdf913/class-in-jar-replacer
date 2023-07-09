@@ -48,6 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.meeuw.functional.Consumers;
 import org.meeuw.functional.Predicates;
+import org.zeroturnaround.zip.ZipEntryCallback;
 
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimap;
@@ -960,6 +961,47 @@ class ClassInJarReplacerTest {
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testZipEntryCallbackImpl() throws Throwable {
+		//
+		final Class<?> clz = Class.forName("ClassInJarReplacer$ZipEntryCallbackImpl");
+		//
+		final Constructor<?> constructor = clz != null ? clz.getDeclaredConstructor() : null;
+		//
+		if (constructor != null) {
+			//
+			constructor.setAccessible(true);
+			//
+		} // if
+			//
+		final ZipEntryCallback zipEntryCallback = constructor != null
+				? cast(ZipEntryCallback.class, constructor.newInstance())
+				: null;
+		//
+		Assertions.assertDoesNotThrow(() -> process(zipEntryCallback, null, null));
+		//
+		Assertions.assertDoesNotThrow(() -> process(zipEntryCallback, null, null));
+		//
+		final Method method = clz != null ? clz.getDeclaredMethod("put", Multimap.class, Object.class, Object.class)
+				: null;
+		//
+		if (method != null) {
+			//
+			method.setAccessible(true);
+			//
+		} // if
+			//
+		Assertions.assertNull(method != null ? method.invoke(zipEntryCallback, null, null, null) : null);
+		//
+	}
+
+	private static void process(final ZipEntryCallback instance, final InputStream in, final ZipEntry zipEntry)
+			throws IOException {
+		if (instance != null) {
+			instance.process(in, zipEntry);
 		}
 	}
 
