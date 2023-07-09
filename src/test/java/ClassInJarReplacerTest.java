@@ -73,8 +73,8 @@ class ClassInJarReplacerTest {
 			METHOD_GET_INSTRUCTIONS, METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE,
 			METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT, METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS,
 			METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH, METHOD_INT_VALUE, METHOD_IS_SELECTED,
-			METHOD_GET_LIST_CELL_RENDERER_COMPONENT, METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES,
-			METHOD_PUT = null;
+			METHOD_GET_LIST_CELL_RENDERER_COMPONENT, METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES, METHOD_PUT,
+			METHOD_SET_DROP_TARGET = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -166,6 +166,9 @@ class ClassInJarReplacerTest {
 				.setAccessible(true);
 		//
 		(METHOD_PUT = clz.getDeclaredMethod("put", Map.class, Object.class, Object.class)).setAccessible(true);
+		//
+		(METHOD_SET_DROP_TARGET = clz.getDeclaredMethod("setDropTarget", Component.class, DropTarget.class))
+				.setAccessible(true);
 		//
 	}
 
@@ -1103,6 +1106,23 @@ class ClassInJarReplacerTest {
 	private static <K, V> void put(final Map<K, V> instance, final K key, final V value) throws Throwable {
 		try {
 			METHOD_PUT.invoke(null, instance, key, value);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testSFetDropTarget() {
+		//
+		Assertions.assertDoesNotThrow(() -> setDropTarget(null, null));
+		//
+		Assertions.assertDoesNotThrow(() -> setDropTarget(new JTextField(), null));
+		//
+	}
+
+	private static void setDropTarget(final Component instance, final DropTarget dt) throws Throwable {
+		try {
+			METHOD_SET_DROP_TARGET.invoke(null, instance, dt);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}

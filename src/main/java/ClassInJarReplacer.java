@@ -171,12 +171,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		jp.setBorder(border);
 		//
-		if (isGui) {
-			//
-			jp.setDropTarget(dtFileJar = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
-			//
-		} // if
-			//
+		testAndAccept(Predicates.biAlways(isGui, null), jp,
+				dtFileJar = isGui ? new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null) : null,
+				ClassInJarReplacer::setDropTarget);
+		//
+		//
 		addDropTargetListener(dtFileJar, this);
 		//
 		testAndAccept(biPredicate, jp = new JPanel(),
@@ -184,12 +183,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		jp.setBorder(border);
 		//
-		if (isGui) {
-			//
-			jp.setDropTarget(dtFile = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null));
-			//
-		} // if
-			//
+		testAndAccept(Predicates.biAlways(isGui, null), jp,
+				dtFile = isGui ? new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, null) : null,
+				ClassInJarReplacer::setDropTarget);
+		//
 		addDropTargetListener(dtFile, this);
 		//
 		// File Path
@@ -246,6 +243,12 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setEditable(false, jtfFileJar, jtfFile, jtfResult);
 		//
+	}
+
+	private static void setDropTarget(final Component instance, final DropTarget dt) {
+		if (instance != null) {
+			instance.setDropTarget(dt);
+		}
 	}
 
 	private static boolean containsKey(final Map<?, ?> instance, final Object key) {
