@@ -62,7 +62,7 @@ class ClassInJarReplacerTest {
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE = null;
+			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -126,6 +126,8 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_SET_EDITABLE = clz.getDeclaredMethod("setEditable", Boolean.TYPE, JTextComponent.class,
 				JTextComponent.class, JTextComponent[].class)).setAccessible(true);
+		//
+		(METHOD_GET_CLASS_NAME = clz.getDeclaredMethod("getClassName", StackTraceElement.class)).setAccessible(true);
 		//
 	}
 
@@ -832,7 +834,27 @@ class ClassInJarReplacerTest {
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
+	}
 
+	@Test
+	void testGetClassName() throws Throwable {
+		//
+		Assertions.assertNull(getClassName(null));
+		//
+	}
+
+	private static String getClassName(final StackTraceElement instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_CLASS_NAME.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
 	}
 
 }
