@@ -50,7 +50,7 @@ class ClassInJarReplacerTest {
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
-			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY = null;
+			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -94,6 +94,8 @@ class ClassInJarReplacerTest {
 		(METHOD_SET_TEXT = clz.getDeclaredMethod("setText", JTextComponent.class, String.class)).setAccessible(true);
 		//
 		(METHOD_CONTAINS_KEY = clz.getDeclaredMethod("containsKey", Multimap.class, Object.class)).setAccessible(true);
+		//
+		(METHOD_GET = clz.getDeclaredMethod("get", Multimap.class, Object.class)).setAccessible(true);
 		//
 	}
 
@@ -633,6 +635,29 @@ class ClassInJarReplacerTest {
 				return ((Boolean) obj).booleanValue();
 			}
 			throw new Throwable(obj != null && obj.getClass() != null ? obj.getClass().toString() : null);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGet() throws Throwable {
+		//
+		Assertions.assertNull(get(null, null));
+		//
+		Assertions.assertEquals(Collections.emptyList(), get(ImmutableListMultimap.of(), null));
+		//
+	}
+
+	private static <K, V> Collection<V> get(final Multimap<K, V> instance, final K key) throws Throwable {
+		try {
+			final Object obj = METHOD_GET.invoke(null, instance, key);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Collection) {
+				return (Collection) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
