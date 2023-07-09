@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +46,8 @@ class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
-			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST = null;
+			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
+			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -79,6 +81,12 @@ class ClassInJarReplacerTest {
 		(METHOD_FILTER = clz.getDeclaredMethod("filter", Stream.class, Predicate.class)).setAccessible(true);
 		//
 		(METHOD_TO_LIST = clz.getDeclaredMethod("toList", Stream.class)).setAccessible(true);
+		//
+		(METHOD_GET_NAME_MEMBER = clz.getDeclaredMethod("getName", Member.class)).setAccessible(true);
+		//
+		(METHOD_GET_NAME_FILE = clz.getDeclaredMethod("getName", File.class)).setAccessible(true);
+		//
+		(METHOD_GET_NAME_ZIP_ENTRY = clz.getDeclaredMethod("getName", ZipEntry.class)).setAccessible(true);
 		//
 	}
 
@@ -519,6 +527,63 @@ class ClassInJarReplacerTest {
 				return null;
 			} else if (obj instanceof List) {
 				return (List) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetName() throws Throwable {
+		//
+		Assertions.assertNull(getName((Member) null));
+		//
+		Assertions.assertNull(getName((File) null));
+		//
+		Assertions.assertNull(getName((ZipEntry) null));
+		//
+		final String string = "string";
+		//
+		Assertions.assertEquals(string, getName(new ZipEntry(string)));
+		//
+	}
+
+	private static String getName(final Member instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_NAME_MEMBER.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static String getName(final File instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_NAME_FILE.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static String getName(final ZipEntry instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_NAME_ZIP_ENTRY.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
