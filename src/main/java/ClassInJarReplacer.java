@@ -385,20 +385,13 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 					//
 				} // if
 					//
-					//
-				if (map == null) {
-					//
-					map = new LinkedHashMap<>();
-					//
-				} // if
-					//
 				if (containsKey(map, object)) {
 					//
 					throw new IllegalStateException();
 					//
 				} // if
 					//
-				map.put(object, f);
+				put(map = ObjectUtils.getIfNull(map, LinkedHashMap::new), object, f);
 				//
 			} // for
 				//
@@ -406,6 +399,12 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		return map;
 		//
+	}
+
+	private static <K, V> void put(final Map<K, V> instance, final K key, final V value) {
+		if (instance != null) {
+			instance.put(key, value);
+		}
 	}
 
 	private static Number getValue(final ConstantPushInstruction instance) {

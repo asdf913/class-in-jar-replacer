@@ -73,7 +73,8 @@ class ClassInJarReplacerTest {
 			METHOD_GET_INSTRUCTIONS, METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE,
 			METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT, METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS,
 			METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH, METHOD_INT_VALUE, METHOD_IS_SELECTED,
-			METHOD_GET_LIST_CELL_RENDERER_COMPONENT, METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES = null;
+			METHOD_GET_LIST_CELL_RENDERER_COMPONENT, METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES,
+			METHOD_PUT = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -163,6 +164,8 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES = clz
 				.getDeclaredMethod("getValueFieldMapByStaticFieldsAndValues", Field[].class, int[].class))
 				.setAccessible(true);
+		//
+		(METHOD_PUT = clz.getDeclaredMethod("put", Map.class, Object.class, Object.class)).setAccessible(true);
 		//
 	}
 
@@ -1086,6 +1089,20 @@ class ClassInJarReplacerTest {
 				return (Map) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testPut() {
+		//
+		Assertions.assertDoesNotThrow(() -> put(null, null, null));
+	}
+
+	private static <K, V> void put(final Map<K, V> instance, final K key, final V value) throws Throwable {
+		try {
+			METHOD_PUT.invoke(null, instance, key, value);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
