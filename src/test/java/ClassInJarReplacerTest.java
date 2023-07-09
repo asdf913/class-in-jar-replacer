@@ -28,6 +28,8 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
@@ -65,7 +67,7 @@ class ClassInJarReplacerTest {
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
 			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT,
 			METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS, METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH,
-			METHOD_INT_VALUE = null;
+			METHOD_INT_VALUE, METHOD_IS_SELECTED = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -142,6 +144,8 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_ABSOLUTE_PATH = clz.getDeclaredMethod("getAbsolutePath", File.class)).setAccessible(true);
 		//
 		(METHOD_INT_VALUE = clz.getDeclaredMethod("intValue", Number.class, Integer.TYPE)).setAccessible(true);
+		//
+		(METHOD_IS_SELECTED = clz.getDeclaredMethod("isSelected", AbstractButton.class)).setAccessible(true);
 		//
 	}
 
@@ -957,6 +961,33 @@ class ClassInJarReplacerTest {
 			final Object obj = METHOD_INT_VALUE.invoke(null, instance, defaultValue);
 			if (obj instanceof Integer) {
 				return ((Integer) obj).intValue();
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testIsSelected() throws Throwable {
+		//
+		Assertions.assertFalse(isSelected(null));
+		//
+		final AbstractButton ab = new JCheckBox();
+		//
+		Assertions.assertFalse(isSelected(ab));
+		//
+		ab.setSelected(true);
+		//
+		Assertions.assertTrue(isSelected(ab));
+		//
+	}
+
+	private static boolean isSelected(final AbstractButton instance) throws Throwable {
+		try {
+			final Object obj = METHOD_IS_SELECTED.invoke(null, instance);
+			if (obj instanceof Boolean) {
+				return ((Boolean) obj).booleanValue();
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {

@@ -465,7 +465,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			setText(jtfFile, getAbsolutePath(this.file = f));
 			//
-			if (jcbAuto != null && jcbAuto.isSelected()) {
+			if (isSelected(jcbAuto)) {
 				//
 				updateZipEntry(fileJar, jtfResult, f, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
 				//
@@ -473,6 +473,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static boolean isSelected(final AbstractButton instance) {
+		return instance != null && instance.isSelected();
 	}
 
 	private static Object getSource(final EventObject instance) {
