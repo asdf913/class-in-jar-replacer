@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
 
+import org.apache.bcel.generic.ConstantPushInstruction;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,7 +57,7 @@ class ClassInJarReplacerTest {
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
-			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4 = null;
+			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -108,6 +109,8 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_TEST_AND_ACCEPT4 = clz.getDeclaredMethod("testAndAccept", BiPredicate.class, Object.class, Object.class,
 				FailableBiConsumer.class)).setAccessible(true);
+		//
+		(METHOD_GET_VALUE = clz.getDeclaredMethod("getValue", ConstantPushInstruction.class)).setAccessible(true);
 		//
 	}
 
@@ -710,6 +713,27 @@ class ClassInJarReplacerTest {
 			final U u, final FailableBiConsumer<T, U, E> consumer) throws Throwable {
 		try {
 			METHOD_TEST_AND_ACCEPT4.invoke(null, predicate, t, u, consumer);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetValue() throws Throwable {
+		//
+		Assertions.assertNull(getValue(null));
+		//
+	}
+
+	private static Number getValue(final ConstantPushInstruction instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_VALUE.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Number) {
+				return (Number) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
