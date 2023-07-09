@@ -62,7 +62,8 @@ class ClassInJarReplacerTest {
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME = null;
+			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME,
+			METHOD_EXISTS = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -128,6 +129,8 @@ class ClassInJarReplacerTest {
 				JTextComponent.class, JTextComponent[].class)).setAccessible(true);
 		//
 		(METHOD_GET_CLASS_NAME = clz.getDeclaredMethod("getClassName", StackTraceElement.class)).setAccessible(true);
+		//
+		(METHOD_EXISTS = clz.getDeclaredMethod("exists", File.class)).setAccessible(true);
 		//
 	}
 
@@ -850,6 +853,25 @@ class ClassInJarReplacerTest {
 				return null;
 			} else if (obj instanceof String) {
 				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testExists() throws Throwable {
+		//
+		Assertions.assertFalse(exists(new File("non_exists")));
+		//
+	}
+
+	private static boolean exists(final File instance) throws Throwable {
+		try {
+			final Object obj = METHOD_EXISTS.invoke(null, instance);
+			if (obj instanceof Boolean) {
+				return ((Boolean) obj).booleanValue();
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
