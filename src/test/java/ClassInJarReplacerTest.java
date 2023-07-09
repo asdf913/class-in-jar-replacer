@@ -106,9 +106,9 @@ class ClassInJarReplacerTest {
 					//
 				} // if
 					//
-			} else if (proxy instanceof Collection) {
+			} else if (proxy instanceof Stream) {
 				//
-				if (Objects.equals(methodName, "stream")) {
+				if (Objects.equals(methodName, "filter")) {
 					//
 					return stream;
 					//
@@ -470,7 +470,7 @@ class ClassInJarReplacerTest {
 		//
 		final Stream<?> stream = Reflection.newProxy(Stream.class, ih);
 		//
-		Assertions.assertSame(stream, filter(stream, null));
+		Assertions.assertSame(ih.stream = stream, filter(stream, null));
 		//
 	}
 
