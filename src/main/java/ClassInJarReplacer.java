@@ -23,11 +23,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EventObject;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TooManyListenersException;
 import java.util.function.BiPredicate;
@@ -43,9 +46,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
@@ -64,6 +69,7 @@ import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -199,10 +205,38 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		testAndAccept(predicate, jcbAuto = new JCheckBox("Auto"), this::add);
 		//
+		final int[] compressionMethods = getCompressionMethods();
+		//
 		testAndAccept(predicate, jcbCompressionLevel = new JComboBox<>(
-				Arrays.stream(getCompressionMethods()).boxed().toArray(Integer[]::new)), this::add);
+				Arrays.stream(compressionMethods).boxed().toArray(Integer[]::new)), this::add);
 		//
 		jcbCompressionLevel.setToolTipText("Compression Method");
+		//
+		final ListCellRenderer<?> listCellRender = jcbCompressionLevel.getRenderer();
+		//
+		final Map<Object, Field> valueFieldMap = getValueFieldMapByStaticFieldsAndValues(
+				ZipEntry.class.getDeclaredFields(), compressionMethods);
+		//
+		jcbCompressionLevel.setRenderer(new ListCellRenderer<Object>() {
+
+			@Override
+			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
+					final boolean isSelected, final boolean cellHasFocus) {
+				//
+				if (containsKey(valueFieldMap, value)) {
+					//
+					return ClassInJarReplacer.getListCellRendererComponent((ListCellRenderer) listCellRender, list,
+							String.format("%1$s (%2$s)", getName(MapUtils.getObject(valueFieldMap, value)), value),
+							index, isSelected, cellHasFocus);
+					//
+				}
+				//
+				return ClassInJarReplacer.getListCellRendererComponent((ListCellRenderer) listCellRender, list, value,
+						index, isSelected, cellHasFocus);
+				//
+			}
+
+		});
 		//
 		testAndAccept(predicate, jbExecute = new JButton("Execute"), this::add);
 		//
@@ -212,6 +246,17 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		setEditable(false, jtfFileJar, jtfFile, jtfResult);
 		//
+	}
+
+	private static boolean containsKey(final Map<?, ?> instance, final Object key) {
+		return instance != null && instance.containsKey(key);
+	}
+
+	private static <E> Component getListCellRendererComponent(final ListCellRenderer<E> instance,
+			final JList<? extends E> list, final E value, final int index, final boolean isSelected,
+			final boolean cellHasFocus) {
+		return instance != null ? instance.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+				: null;
 	}
 
 	private static void addDropTargetListener(final DropTarget instance, final DropTargetListener dropTargetListener)
@@ -313,6 +358,53 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		Arrays.sort(ints);
 		//
 		return ints;
+		//
+	}
+
+	private static Map<Object, Field> getValueFieldMapByStaticFieldsAndValues(final Field[] fs, final int[] objects) {
+		//
+		Field f = null;
+		//
+		Map<Object, Field> map = null;
+		//
+		Object object = null;
+		//
+		for (int i = 0; fs != null && i < fs.length; i++) {
+			//
+			if ((f = fs[i]) == null || !Modifier.isStatic(f.getModifiers())) {
+				//
+				continue;
+				//
+			} // if
+				//
+			for (int j = 0; objects != null && j < objects.length; j++) {
+				//
+				if (!Objects.equals(Narcissus.getStaticField(f), object = objects[j])) {
+					//
+					continue;
+					//
+				} // if
+					//
+					//
+				if (map == null) {
+					//
+					map = new LinkedHashMap<>();
+					//
+				} // if
+					//
+				if (containsKey(map, object)) {
+					//
+					throw new IllegalStateException();
+					//
+				} // if
+					//
+				map.put(object, f);
+				//
+			} // for
+				//
+		} // for
+			//
+		return map;
 		//
 	}
 

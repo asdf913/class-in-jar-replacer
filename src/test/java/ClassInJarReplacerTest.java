@@ -1,3 +1,4 @@
+import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -20,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -31,7 +34,9 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.text.JTextComponent;
 
 import org.apache.bcel.classfile.ConstantPool;
@@ -63,11 +68,12 @@ class ClassInJarReplacerTest {
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
-			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
-			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT,
-			METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS, METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH,
-			METHOD_INT_VALUE, METHOD_IS_SELECTED = null;
+			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY_MULTI_MAP,
+			METHOD_CONTAINS_KEY_MAP, METHOD_GET, METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE,
+			METHOD_GET_INSTRUCTIONS, METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE,
+			METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT, METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS,
+			METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH, METHOD_INT_VALUE, METHOD_IS_SELECTED,
+			METHOD_GET_LIST_CELL_RENDERER_COMPONENT, METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -110,7 +116,10 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_SET_TEXT = clz.getDeclaredMethod("setText", JTextComponent.class, String.class)).setAccessible(true);
 		//
-		(METHOD_CONTAINS_KEY = clz.getDeclaredMethod("containsKey", Multimap.class, Object.class)).setAccessible(true);
+		(METHOD_CONTAINS_KEY_MULTI_MAP = clz.getDeclaredMethod("containsKey", Multimap.class, Object.class))
+				.setAccessible(true);
+		//
+		(METHOD_CONTAINS_KEY_MAP = clz.getDeclaredMethod("containsKey", Map.class, Object.class)).setAccessible(true);
 		//
 		(METHOD_GET = clz.getDeclaredMethod("get", Multimap.class, Object.class)).setAccessible(true);
 		//
@@ -147,6 +156,14 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_IS_SELECTED = clz.getDeclaredMethod("isSelected", AbstractButton.class)).setAccessible(true);
 		//
+		(METHOD_GET_LIST_CELL_RENDERER_COMPONENT = clz.getDeclaredMethod("getListCellRendererComponent",
+				ListCellRenderer.class, JList.class, Object.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE))
+				.setAccessible(true);
+		//
+		(METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES = clz
+				.getDeclaredMethod("getValueFieldMapByStaticFieldsAndValues", Field[].class, int[].class))
+				.setAccessible(true);
+		//
 	}
 
 	private static class IH implements InvocationHandler {
@@ -179,6 +196,14 @@ class ClassInJarReplacerTest {
 				if (Objects.equals(methodName, "filter")) {
 					//
 					return stream;
+					//
+				} // if
+					//
+			} else if (proxy instanceof ListCellRenderer) {
+				//
+				if (Objects.equals(methodName, "getListCellRendererComponent")) {
+					//
+					return null;
 					//
 				} // if
 					//
@@ -667,7 +692,11 @@ class ClassInJarReplacerTest {
 	@Test
 	void testContainsKey() throws Throwable {
 		//
-		Assertions.assertFalse(containsKey(null, null));
+		Assertions.assertFalse(containsKey((Map) null, null));
+		//
+		Assertions.assertTrue(containsKey(Collections.singletonMap(null, null), null));
+		//
+		Assertions.assertFalse(containsKey((Multimap) null, null));
 		//
 		Assertions.assertFalse(containsKey(ImmutableListMultimap.of(), null));
 		//
@@ -679,7 +708,19 @@ class ClassInJarReplacerTest {
 
 	private static boolean containsKey(final Multimap<?, ?> instance, final Object key) throws Throwable {
 		try {
-			final Object obj = METHOD_CONTAINS_KEY.invoke(null, instance, key);
+			final Object obj = METHOD_CONTAINS_KEY_MULTI_MAP.invoke(null, instance, key);
+			if (obj instanceof Boolean) {
+				return ((Boolean) obj).booleanValue();
+			}
+			throw new Throwable(obj != null && obj.getClass() != null ? obj.getClass().toString() : null);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static boolean containsKey(final Map<?, ?> instance, final Object key) throws Throwable {
+		try {
+			final Object obj = METHOD_CONTAINS_KEY_MAP.invoke(null, instance, key);
 			if (obj instanceof Boolean) {
 				return ((Boolean) obj).booleanValue();
 			}
@@ -988,6 +1029,61 @@ class ClassInJarReplacerTest {
 			final Object obj = METHOD_IS_SELECTED.invoke(null, instance);
 			if (obj instanceof Boolean) {
 				return ((Boolean) obj).booleanValue();
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetListCellRendererComponent() throws Throwable {
+		//
+		Assertions.assertNull(getListCellRendererComponent(null, null, null, 0, false, false));
+		//
+		final ListCellRenderer<?> listCellRenderer = Reflection.newProxy(ListCellRenderer.class, ih);
+		//
+		Assertions.assertNull(getListCellRendererComponent(listCellRenderer, null, null, 0, false, false));
+		//
+	}
+
+	private static <E> Component getListCellRendererComponent(final ListCellRenderer<E> instance,
+			final JList<? extends E> list, final E value, final int index, final boolean isSelected,
+			final boolean cellHasFocus) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_LIST_CELL_RENDERER_COMPONENT.invoke(null, instance, list, value, index,
+					isSelected, cellHasFocus);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Component) {
+				return (Component) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetValueFieldMapByStaticFieldsAndValues() throws Throwable {
+		//
+		Assertions.assertNull(getValueFieldMapByStaticFieldsAndValues(null, null));
+		//
+		Assertions.assertNull(getValueFieldMapByStaticFieldsAndValues(new Field[] { null }, null));
+		//
+		Assertions.assertNull(
+				getValueFieldMapByStaticFieldsAndValues(new Field[] { Boolean.class.getDeclaredField("TRUE") }, null));
+		//
+	}
+
+	private static Map<Object, Field> getValueFieldMapByStaticFieldsAndValues(final Field[] fs, final int[] objects)
+			throws Throwable {
+		try {
+			final Object obj = METHOD_GET_VALUE_FIELD_MAP_BY_STATIC_FIELDS_AND_VALUES.invoke(null, fs, objects);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Map) {
+				return (Map) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
