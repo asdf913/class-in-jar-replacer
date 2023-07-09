@@ -42,7 +42,8 @@ import io.github.toolfactory.narcissus.Narcissus;
 class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
-			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST = null;
+			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
+			METHOD_ADD_DROP_TARGET_LISTENER = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -67,6 +68,9 @@ class ClassInJarReplacerTest {
 				JTextComponent.class, Integer.TYPE)).setAccessible(true);
 		//
 		(METHOD_GET_LIST = clz.getDeclaredMethod("getList", Transferable.class)).setAccessible(true);
+		//
+		(METHOD_ADD_DROP_TARGET_LISTENER = clz.getDeclaredMethod("addDropTargetListener", DropTarget.class,
+				DropTargetListener.class)).setAccessible(true);
 		//
 	}
 
@@ -409,6 +413,23 @@ class ClassInJarReplacerTest {
 				return (List) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testAddDropTargetListener() {
+		//
+		Assertions.assertDoesNotThrow(() -> addDropTargetListener(
+				cast(DropTarget.class, Narcissus.allocateInstance(DropTarget.class)), null));
+		//
+	}
+
+	private static void addDropTargetListener(final DropTarget instance, final DropTargetListener dropTargetListener)
+			throws Throwable {
+		try {
+			METHOD_ADD_DROP_TARGET_LISTENER.invoke(null, instance, dropTargetListener);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
