@@ -62,7 +62,7 @@ class ClassInJarReplacerTest {
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL = null;
+			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -120,6 +120,9 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_INSTRUCTIONS = clz.getDeclaredMethod("getInstructions", InstructionList.class)).setAccessible(true);
 		//
 		(METHOD_GET_CONSTANT_POOL = clz.getDeclaredMethod("getConstantPool", JavaClass.class)).setAccessible(true);
+		//
+		(METHOD_GET_METHOD = clz.getDeclaredMethod("getMethod", JavaClass.class, java.lang.reflect.Method.class))
+				.setAccessible(true);
 		//
 	}
 
@@ -783,6 +786,28 @@ class ClassInJarReplacerTest {
 				return null;
 			} else if (obj instanceof ConstantPool) {
 				return (ConstantPool) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testGetMethod() throws Throwable {
+		//
+		Assertions.assertNull(getMethod(null, null));
+		//
+	}
+
+	private static org.apache.bcel.classfile.Method getMethod(final JavaClass instance, final Method method)
+			throws Throwable {
+		try {
+			final Object obj = METHOD_GET_METHOD.invoke(null, instance, method);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof org.apache.bcel.classfile.Method) {
+				return (org.apache.bcel.classfile.Method) obj;
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
