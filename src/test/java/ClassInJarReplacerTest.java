@@ -63,7 +63,8 @@ class ClassInJarReplacerTest {
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
 			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT,
-			METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS, METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH = null;
+			METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS, METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH,
+			METHOD_INT_VALUE = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -138,6 +139,8 @@ class ClassInJarReplacerTest {
 		(METHOD_GET_SELECTED_ITEM = clz.getDeclaredMethod("getSelectedItem", JComboBox.class)).setAccessible(true);
 		//
 		(METHOD_GET_ABSOLUTE_PATH = clz.getDeclaredMethod("getAbsolutePath", File.class)).setAccessible(true);
+		//
+		(METHOD_INT_VALUE = clz.getDeclaredMethod("intValue", Number.class, Integer.TYPE)).setAccessible(true);
 		//
 	}
 
@@ -930,6 +933,29 @@ class ClassInJarReplacerTest {
 				return null;
 			} else if (obj instanceof String) {
 				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testIntValue() throws Throwable {
+		//
+		final int one = 1;
+		//
+		final Integer ONE = Integer.valueOf(one);
+		//
+		Assertions.assertEquals(ONE, intValue(ONE, one));
+		//
+	}
+
+	private static int intValue(final Number instance, final int defaultValue) throws Throwable {
+		try {
+			final Object obj = METHOD_INT_VALUE.invoke(null, instance, defaultValue);
+			if (obj instanceof Integer) {
+				return ((Integer) obj).intValue();
 			}
 			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
