@@ -62,8 +62,8 @@ class ClassInJarReplacerTest {
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY, METHOD_GET,
 			METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE, METHOD_GET_INSTRUCTIONS,
-			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME, METHOD_EXISTS,
-			METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH = null;
+			METHOD_GET_CONSTANT_POOL, METHOD_GET_METHOD, METHOD_SET_EDITABLE, METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT,
+			METHOD_GET_CLASS_NAME_JAVA_CLASS, METHOD_EXISTS, METHOD_GET_SELECTED_ITEM, METHOD_GET_ABSOLUTE_PATH = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -128,7 +128,10 @@ class ClassInJarReplacerTest {
 		(METHOD_SET_EDITABLE = clz.getDeclaredMethod("setEditable", Boolean.TYPE, JTextComponent.class,
 				JTextComponent.class, JTextComponent[].class)).setAccessible(true);
 		//
-		(METHOD_GET_CLASS_NAME = clz.getDeclaredMethod("getClassName", StackTraceElement.class)).setAccessible(true);
+		(METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT = clz.getDeclaredMethod("getClassName", StackTraceElement.class))
+				.setAccessible(true);
+		//
+		(METHOD_GET_CLASS_NAME_JAVA_CLASS = clz.getDeclaredMethod("getClassName", JavaClass.class)).setAccessible(true);
 		//
 		(METHOD_EXISTS = clz.getDeclaredMethod("exists", File.class)).setAccessible(true);
 		//
@@ -845,13 +848,29 @@ class ClassInJarReplacerTest {
 	@Test
 	void testGetClassName() throws Throwable {
 		//
-		Assertions.assertNull(getClassName(null));
+		Assertions.assertNull(getClassName((StackTraceElement) null));
+		//
+		Assertions.assertNull(getClassName((JavaClass) null));
 		//
 	}
 
 	private static String getClassName(final StackTraceElement instance) throws Throwable {
 		try {
-			final Object obj = METHOD_GET_CLASS_NAME.invoke(null, instance);
+			final Object obj = METHOD_GET_CLASS_NAME_STACK_TRACE_ELEMENT.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof String) {
+				return (String) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static String getClassName(final JavaClass instance) throws Throwable {
+		try {
+			final Object obj = METHOD_GET_CLASS_NAME_JAVA_CLASS.invoke(null, instance);
 			if (obj == null) {
 				return null;
 			} else if (obj instanceof String) {

@@ -765,8 +765,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 				testAndAccept((a, b) -> a != null, fileJar, javaClass,
 						(a, b) -> ZipUtil.addEntry(a,
-								String.format("%1$s.class",
-										StringUtils.replace(b != null ? b.getClassName() : null, ".", "/")),
+								String.format("%1$s.class", StringUtils.replace(getClassName(b), ".", "/")),
 								FileUtils.readFileToByteArray(file), cm));
 				//
 				setText(jtc, Boolean.toString(true));
@@ -782,6 +781,10 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 		} // if
 			//
+	}
+
+	private static String getClassName(final JavaClass instance) {
+		return instance != null ? instance.getClassName() : null;
 	}
 
 	private static JavaClass parse(final ClassParser instance) throws IOException, ClassFormatException {
