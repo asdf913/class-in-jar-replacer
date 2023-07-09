@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -43,7 +44,7 @@ class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
-			METHOD_ADD_DROP_TARGET_LISTENER = null;
+			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -71,6 +72,8 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_ADD_DROP_TARGET_LISTENER = clz.getDeclaredMethod("addDropTargetListener", DropTarget.class,
 				DropTargetListener.class)).setAccessible(true);
+		//
+		(METHOD_STREAM = clz.getDeclaredMethod("stream", Collection.class)).setAccessible(true);
 		//
 	}
 
@@ -430,6 +433,27 @@ class ClassInJarReplacerTest {
 			throws Throwable {
 		try {
 			METHOD_ADD_DROP_TARGET_LISTENER.invoke(null, instance, dropTargetListener);
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	@Test
+	void testStream() throws Throwable {
+		//
+		Assertions.assertNull(stream(null));
+		//
+	}
+
+	private static <T> Stream<T> stream(final Collection<T> instance) throws Throwable {
+		try {
+			final Object obj = METHOD_STREAM.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Stream) {
+				return (Stream) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
