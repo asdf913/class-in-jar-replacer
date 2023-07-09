@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -44,7 +45,7 @@ class ClassInJarReplacerTest {
 
 	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
 			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
-			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM = null;
+			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER = null;
 
 	@BeforeAll
 	static void beforeAll() throws ReflectiveOperationException {
@@ -75,6 +76,8 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_STREAM = clz.getDeclaredMethod("stream", Collection.class)).setAccessible(true);
 		//
+		(METHOD_FILTER = clz.getDeclaredMethod("filter", Stream.class, Predicate.class)).setAccessible(true);
+		//
 	}
 
 	private static class IH implements InvocationHandler {
@@ -82,6 +85,8 @@ class ClassInJarReplacerTest {
 		private DataFlavor[] transferDataFlavors = null;
 
 		private Object transferData = null;
+
+		private Stream<?> stream = null;
 
 		@Override
 		public Object invoke(final Object proxy, @Nullable final Method method, @Nullable final Object[] args)
@@ -101,6 +106,14 @@ class ClassInJarReplacerTest {
 					//
 				} // if
 					//
+			} else if (proxy instanceof Collection) {
+				//
+				if (Objects.equals(methodName, "stream")) {
+					//
+					return stream;
+					//
+				} // if
+					//
 			} // if
 				//
 			throw new Throwable(methodName);
@@ -110,6 +123,8 @@ class ClassInJarReplacerTest {
 	}
 
 	private ClassInJarReplacer instance = null;
+
+	private IH ih = null;
 
 	@BeforeEach
 	void beforeEach() throws Throwable {
@@ -132,6 +147,8 @@ class ClassInJarReplacerTest {
 			//
 		} // if
 			//
+		ih = new IH();
+		//
 	}
 
 	@Test
@@ -389,18 +406,24 @@ class ClassInJarReplacerTest {
 	@Test
 	void testGetList() throws Throwable {
 		//
-		final IH ih = new IH();
-		//
 		final Transferable transferable = Reflection.newProxy(Transferable.class, ih);
 		//
 		Assertions.assertNull(getList(transferable));
 		//
-		ih.transferDataFlavors = new DataFlavor[] { null };
-		//
+		if (ih != null) {
+			//
+			ih.transferDataFlavors = new DataFlavor[] { null };
+			//
+		} // if
+			//
 		Assertions.assertNull(getList(transferable));
 		//
-		ih.transferDataFlavors = new DataFlavor[] { DataFlavor.allHtmlFlavor, DataFlavor.javaFileListFlavor };
-		//
+		if (ih != null) {
+			//
+			ih.transferDataFlavors = new DataFlavor[] { DataFlavor.allHtmlFlavor, DataFlavor.javaFileListFlavor };
+			//
+		} // if
+			//
 		Assertions.assertNull(getList(transferable));
 		//
 		Assertions.assertSame(ih.transferData = Collections.emptyList(), getList(transferable));
@@ -439,15 +462,36 @@ class ClassInJarReplacerTest {
 	}
 
 	@Test
-	void testStream() throws Throwable {
+	void testFilter() throws Throwable {
 		//
-		Assertions.assertNull(stream(null));
+		Assertions.assertNull(filter(stream(null), null));
+		//
+		Assertions.assertNull(filter(Stream.empty(), null));
+		//
+		final Stream<?> stream = Reflection.newProxy(Stream.class, ih);
+		//
+		Assertions.assertSame(stream, filter(stream, null));
 		//
 	}
 
 	private static <T> Stream<T> stream(final Collection<T> instance) throws Throwable {
 		try {
 			final Object obj = METHOD_STREAM.invoke(null, instance);
+			if (obj == null) {
+				return null;
+			} else if (obj instanceof Stream) {
+				return (Stream) obj;
+			}
+			throw new Throwable(toString(getClass(obj)));
+		} catch (final InvocationTargetException e) {
+			throw e.getTargetException();
+		}
+	}
+
+	private static <T> Stream<T> filter(final Stream<T> instance, final Predicate<? super T> predicate)
+			throws Throwable {
+		try {
+			final Object obj = METHOD_FILTER.invoke(null, instance, predicate);
 			if (obj == null) {
 				return null;
 			} else if (obj instanceof Stream) {
