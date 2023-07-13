@@ -543,33 +543,47 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			acceptDrop(dtde, DnDConstants.ACTION_COPY_OR_MOVE);
 			//
-			final File f = getFile(getList(getTransferable(dtde)));
+			final List<?> list = getList(getTransferable(dtde));
 			//
-			final String absolutePath = getAbsolutePath(f);
+			File f = null;
 			//
-			if (!exists(f)) {
-				//
-				testAndAccept(Predicates.always(isGui, null), String.format("%1$s not exist", absolutePath),
-						x -> JOptionPane.showMessageDialog(null, x));
-				//
-				return;
-				//
-			} else if (!isFile(f)) {
-				//
-				JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
-				//
-				return;
-				//
-			} // if
-				//
-			setText(jtfFile, getAbsolutePath(this.file = f));
+			String absolutePath = null;
 			//
-			if (isSelected(jcbAuto)) {
+			for (int i = 0; list != null && i < list.size(); i++) {
 				//
-				updateZipEntry(fileJar, jtfResult, f, jtfAddedOrUpdated,
-						cast(Number.class, getSelectedItem(jcbCompressionLevel)));
+				if ((f = cast(File.class, list.get(i))) == null) {
+					//
+					continue;
+					//
+				} // if
+					//
+				absolutePath = getAbsolutePath(f);
 				//
-			} // if
+				if (!exists(f)) {
+					//
+					testAndAccept(Predicates.always(isGui, null), String.format("%1$s not exist", absolutePath),
+							x -> JOptionPane.showMessageDialog(null, x));
+					//
+					return;
+					//
+				} else if (!isFile(f)) {
+					//
+					JOptionPane.showMessageDialog(null, String.format("%1$s is not a regular file", absolutePath));
+					//
+					return;
+					//
+				} // if
+					//
+				setText(jtfFile, getAbsolutePath(file = f));
+				//
+				if (isSelected(jcbAuto)) {
+					//
+					updateZipEntry(fileJar, jtfResult, f, jtfAddedOrUpdated,
+							cast(Number.class, getSelectedItem(jcbCompressionLevel)));
+					//
+				} // if
+					//
+			} // for
 				//
 		} // if
 			//
