@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -19,6 +20,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,6 +57,7 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.RETURN;
 import org.apache.bcel.generic.Type;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.FailableBiConsumer;
@@ -1179,7 +1186,7 @@ class ClassInJarReplacerTest {
 			if ((ins = getInstructions(new MethodGen(m, null, cpg).getInstructionList())) != null && ins.length == 1
 					&& (r = cast(RETURN.class, ins[0])) != null && Objects.equals(Type.VOID, r.getType())) {
 				//
-				getMethodsByName(clz.getDeclaredMethods(), m != null ? m.getName() : null).forEach(x -> {
+				getMethodsByName(getDeclaredMethods(clz), m != null ? m.getName() : null).forEach(x -> {
 					//
 					if (x == null) {
 						//
@@ -1199,6 +1206,136 @@ class ClassInJarReplacerTest {
 				//
 		} // for
 			//
+	}
+
+	private static Method[] getDeclaredMethods(final Class<?> instance) {
+		return instance != null ? instance.getDeclaredMethods() : null;
+	}
+
+	@Test
+	void testInnerClass() throws Throwable {
+		//
+		final Class<?> clz = ClassInJarReplacer.class;
+		//
+		final ProtectionDomain pd = clz.getProtectionDomain();
+		//
+		final CodeSource cs = pd != null ? pd.getCodeSource() : null;
+		//
+		final URL location = cs != null ? cs.getLocation() : null;
+		//
+		final File file = new File(location != null ? location.toURI() : null);
+		//
+		final File[] fs = file.listFiles();
+		//
+		File f = null;
+		//
+		JavaClass javaClass = null;
+		//
+		ConstantPoolGen cpg = null;
+		//
+		org.apache.bcel.classfile.Method[] ms = null;
+		//
+		org.apache.bcel.classfile.Method m = null;
+		//
+		for (int i = 0; fs != null && i < fs.length; i++) {
+			//
+			if ((f = fs[i]) == null || f.getName() == null || !f.getName().matches("^[^$]+\\$\\d+.class$")) {
+				//
+				continue;
+				//
+			} // if
+				//
+			try (final InputStream is = new FileInputStream(f)) {
+				//
+				javaClass = new ClassParser(is, null).parse();
+				//
+			} catch (final IOException e) {
+				//
+				e.printStackTrace();
+				//
+			} // try
+				//
+			ms = javaClass != null ? javaClass.getMethods() : null;
+			//
+			m = null;
+			//
+			cpg = null;
+			//
+			for (int j = 0; ms != null && j < ms.length; j++) {
+				//
+				if ((m = ms[j]) == null) {
+					//
+					continue;
+					//
+				} // if
+					//
+				if (cpg == null) {
+					//
+					cpg = new ConstantPoolGen(getConstantPool(javaClass));
+					//
+				} // if
+					//
+				final Class<?> c = Class.forName(getClassName(javaClass));
+				//
+				getMethodsByName(getDeclaredMethods(c), m != null ? m.getName() : null).forEach(x -> {
+					//
+					if (x == null) {
+						//
+						return;
+						//
+					} // if
+						//
+					final Class<?>[] parameterTypes = x.getParameterTypes();
+					//
+					Class<?> parameterType = null;
+					//
+					List<Object> parameters = null;
+					//
+					for (int k = 0; parameterTypes != null && k < parameterTypes.length; k++) {
+						//
+						if ((parameterType = parameterTypes[k]) == null) {
+							//
+							continue;
+							//
+						} // if
+							//
+						if (Objects.equals(parameterType, Integer.TYPE)) {
+							//
+							add(parameters = ObjectUtils.getIfNull(parameters, ArrayList::new), Integer.valueOf(0));
+							//
+						} else if (Objects.equals(parameterType, Boolean.TYPE)) {
+							//
+							add(parameters = ObjectUtils.getIfNull(parameters, ArrayList::new), Boolean.FALSE);
+							//
+						} else {
+							//
+							add(parameters = ObjectUtils.getIfNull(parameters, ArrayList::new), null);
+							//
+						} // if
+							//
+					} // for
+						//
+					final Object[] objects = parameters != null ? parameters.toArray() : null;
+					//
+					if (!Modifier.isStatic(x.getModifiers())) {
+						//
+						Assertions.assertDoesNotThrow(
+								() -> Narcissus.invokeMethod(Narcissus.allocateInstance(c), x, objects));
+						//
+					} // if
+						//
+				});
+				//
+			} // for
+				//
+		} // for
+			//
+	}
+
+	private static <E> void add(final Collection<E> instance, final E item) {
+		if (instance != null) {
+			instance.add(item);
+		}
 	}
 
 	private static List<Method> getMethodsByName(final Method[] ms, final String name) {
