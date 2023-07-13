@@ -119,6 +119,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 	@Note("File")
 	private JTextComponent jtfFile = null;
 
+	@Note("Added or Updated")
+	private JTextComponent jtfAddedOrUpdated = null;
+
 	@Note("Result")
 	private JTextComponent jtfResult = null;
 
@@ -241,7 +244,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		testAndAccept(biPredicate, jtfResult = new JTextField(), String.format("%1$s,wmin %2$s", growx, 50), this::add);
 		//
-		setEditable(false, jtfFileJar, jtfFile, jtfResult);
+		testAndAccept(biPredicate, jtfAddedOrUpdated = new JTextField(), String.format("wmin %1$s", 55), this::add);
+		//
+		setEditable(false, jtfFileJar, jtfFile, jtfResult, jtfAddedOrUpdated);
 		//
 	}
 
@@ -561,7 +566,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			if (isSelected(jcbAuto)) {
 				//
-				updateZipEntry(fileJar, jtfResult, f, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
+				updateZipEntry(fileJar, jtfResult, f, jtfAddedOrUpdated,
+						cast(Number.class, getSelectedItem(jcbCompressionLevel)));
 				//
 			} // if
 				//
@@ -724,16 +730,17 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (Objects.equals(getSource(evt), this.jbExecute)) {
 			//
-			updateZipEntry(fileJar, jtfResult, file, cast(Number.class, getSelectedItem(jcbCompressionLevel)));
+			updateZipEntry(fileJar, jtfResult, file, jtfAddedOrUpdated,
+					cast(Number.class, getSelectedItem(jcbCompressionLevel)));
 			//
 		} // if
 			//
 	}
 
-	private static void updateZipEntry(final File fileJar, final JTextComponent jtc, final File file,
-			final Number compressionMethod) {
+	private static void updateZipEntry(final File fileJar, final JTextComponent jtcResult, final File file,
+			final JTextComponent jtcAddedOrUpdated, final Number compressionMethod) {
 		//
-		setText(jtc, null);
+		setText(jtcResult, null);
 		//
 		final boolean isGui = !GraphicsEnvironment.isHeadless();
 		//
@@ -796,14 +803,16 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		final Multimap<String, ZipEntry> names = zecb.entries;
 		//
 		updateZipEntry(file, fileJar, testAndApply(x -> containsKey(names, x), getName(file), x -> get(names, x), null),
-				jtc, intValue(compressionMethod, 0));
+				jtcResult, jtcAddedOrUpdated, intValue(compressionMethod, 0));
 		//
 	}
 
 	private static void updateZipEntry(final File file, final File fileJar, final Collection<ZipEntry> collection,
-			final JTextComponent jtc, final int cm) {
+			final JTextComponent jtcResult, final JTextComponent jtcAddedOrUpdated, final int cm) {
 		//
 		ContentInfo ci = null;
+		//
+		setText(jtcAddedOrUpdated, null);
 		//
 		if (collection == null || collection.isEmpty()) {
 			//
@@ -818,7 +827,9 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 				//
 			if (Objects.equals(getMimeType(ci), "application/x-java-applet")) {
 				//
-				addJavaClassIntoZipFile(file, fileJar, jtc, cm);
+				addJavaClassIntoZipFile(file, fileJar, jtcResult, cm);
+				//
+				setText(jtcAddedOrUpdated, "Added");
 				//
 			} // if
 				//
@@ -826,9 +837,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			try {
 				//
-				setText(jtc, toString(testAndApply(Objects::nonNull,
+				setText(jtcResult, toString(testAndApply(Objects::nonNull,
 						testAndApply(Objects::nonNull, file, FileUtils::readFileToByteArray, null),
 						x -> ZipUtil.replaceEntry(fileJar, getName(IterableUtils.get(collection, 0)), x, cm), null)));
+				//
+				setText(jtcAddedOrUpdated, "Updated");
 				//
 			} catch (final IOException e) {
 				// TODO Auto-generated catch block
