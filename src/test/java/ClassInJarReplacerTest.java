@@ -78,8 +78,8 @@ import io.github.toolfactory.narcissus.Narcissus;
 
 class ClassInJarReplacerTest {
 
-	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY4,
-			METHOD_UPDATE_ZIP_ENTRY5, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
+	private static Method METHOD_CAST, METHOD_GET_FILE, METHOD_GET_CLASS, METHOD_TO_STRING, METHOD_UPDATE_ZIP_ENTRY5,
+			METHOD_UPDATE_ZIP_ENTRY6, METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE, METHOD_GET_LIST,
 			METHOD_ADD_DROP_TARGET_LISTENER, METHOD_STREAM, METHOD_FILTER, METHOD_TO_LIST, METHOD_GET_NAME_MEMBER,
 			METHOD_GET_NAME_FILE, METHOD_GET_NAME_ZIP_ENTRY, METHOD_SET_TEXT, METHOD_CONTAINS_KEY_MULTI_MAP,
 			METHOD_CONTAINS_KEY_MAP, METHOD_GET, METHOD_TEST_AND_ACCEPT3, METHOD_TEST_AND_ACCEPT4, METHOD_GET_VALUE,
@@ -102,11 +102,11 @@ class ClassInJarReplacerTest {
 		//
 		(METHOD_TO_STRING = clz.getDeclaredMethod("toString", Object.class)).setAccessible(true);
 		//
-		(METHOD_UPDATE_ZIP_ENTRY4 = clz.getDeclaredMethod("updateZipEntry", File.class, JTextComponent.class,
-				File.class, Number.class)).setAccessible(true);
+		(METHOD_UPDATE_ZIP_ENTRY5 = clz.getDeclaredMethod("updateZipEntry", File.class, JTextComponent.class,
+				File.class, JTextComponent.class, Number.class)).setAccessible(true);
 		//
-		(METHOD_UPDATE_ZIP_ENTRY5 = clz.getDeclaredMethod("updateZipEntry", File.class, File.class, Collection.class,
-				JTextComponent.class, Integer.TYPE)).setAccessible(true);
+		(METHOD_UPDATE_ZIP_ENTRY6 = clz.getDeclaredMethod("updateZipEntry", File.class, File.class, Collection.class,
+				JTextComponent.class, JTextComponent.class, Integer.TYPE)).setAccessible(true);
 		//
 		(METHOD_ADD_JAVA_CLASS_INTO_ZIP_FILE = clz.getDeclaredMethod("addJavaClassIntoZipFile", File.class, File.class,
 				JTextComponent.class, Integer.TYPE)).setAccessible(true);
@@ -402,7 +402,7 @@ class ClassInJarReplacerTest {
 		//
 		final File filePomXml = new File("pom.xml");
 		//
-		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, null, null));
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, null, null, null));
 		//
 		final File fileZip = File.createTempFile(RandomStringUtils.randomAlphanumeric(3), null);
 		//
@@ -414,17 +414,17 @@ class ClassInJarReplacerTest {
 			//
 		FileUtils.writeByteArrayToFile(fileZip, crateZipAsByteArray("a.b", "".getBytes()));
 		//
-		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, null, null));
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, null, null, null));
 		//
-		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, filePomXml, null));
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(fileZip, null, filePomXml, null, null));
 		//
 		Assertions.assertDoesNotThrow(() -> updateZipEntry(null, null, null, null, 0));
 		//
 		Assertions.assertDoesNotThrow(() -> updateZipEntry(new File("."), null, null, null, 0));
 		//
-		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, Collections.emptyList(), null, 0));
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(filePomXml, null, Collections.emptyList(), null, null, 0));
 		//
-		Assertions.assertDoesNotThrow(() -> updateZipEntry(null, null, Collections.singleton(null), null, 0));
+		Assertions.assertDoesNotThrow(() -> updateZipEntry(null, null, Collections.singleton(null), null, null, 0));
 		//
 	}
 
@@ -447,19 +447,19 @@ class ClassInJarReplacerTest {
 			//
 	}
 
-	private static void updateZipEntry(final File fileJar, final JTextComponent jtc, final File file,
-			final Number compressionMethod) throws Throwable {
+	private static void updateZipEntry(final File fileJar, final JTextComponent jtcResult, final File file,
+			final JTextComponent jtcAddedOrUpdated, final Number compressionMethod) throws Throwable {
 		try {
-			METHOD_UPDATE_ZIP_ENTRY4.invoke(null, fileJar, jtc, file, compressionMethod);
+			METHOD_UPDATE_ZIP_ENTRY5.invoke(null, fileJar, jtcResult, file, jtcAddedOrUpdated, compressionMethod);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
 	}
 
 	private static void updateZipEntry(final File file, final File fileJar, final Collection<ZipEntry> collection,
-			final JTextComponent jtc, final int cm) throws Throwable {
+			final JTextComponent jtcResult, final JTextComponent jtcAddedOrUpdated, final int cm) throws Throwable {
 		try {
-			METHOD_UPDATE_ZIP_ENTRY5.invoke(null, file, fileJar, collection, jtc, cm);
+			METHOD_UPDATE_ZIP_ENTRY6.invoke(null, file, fileJar, collection, jtcResult, jtcAddedOrUpdated, cm);
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
