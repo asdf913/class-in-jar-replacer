@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,11 +40,16 @@ import javax.swing.JTextField;
 import javax.swing.ListCellRenderer;
 import javax.swing.text.JTextComponent;
 
+import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.ConstantPushInstruction;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.RETURN;
+import org.apache.bcel.generic.Type;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1126,6 +1132,79 @@ class ClassInJarReplacerTest {
 		} catch (final InvocationTargetException e) {
 			throw e.getTargetException();
 		}
+	}
+
+	@Test
+	void testEmptyMethods() throws Throwable {
+		//
+		final Class<?> clz = ClassInJarReplacer.class;
+		//
+		JavaClass javaClass = null;
+		//
+		try (final InputStream is = clz
+				.getResourceAsStream(String.format("/%1$s.class", StringUtils.replace(clz.getName(), ".", "/")))) {
+			//
+			javaClass = new ClassParser(is, null).parse();
+			//
+		} catch (final IOException e) {
+			//
+			e.printStackTrace();
+			//
+		} // try
+			//
+		final org.apache.bcel.classfile.Method[] ms = javaClass != null ? javaClass.getMethods() : null;
+		//
+		org.apache.bcel.classfile.Method m = null;
+		//
+		ConstantPoolGen cpg = null;
+		//
+		Instruction[] ins = null;
+		//
+		RETURN r = null;
+		//
+		for (int i = 0; ms != null && i < ms.length; i++) {
+			//
+			if ((m = ms[i]) == null) {
+				//
+				continue;
+				//
+			} // if
+				//
+			if (cpg == null) {
+				//
+				cpg = new ConstantPoolGen(getConstantPool(javaClass));
+				//
+			} // if
+				//
+			if ((ins = getInstructions(new MethodGen(m, null, cpg).getInstructionList())) != null && ins.length == 1
+					&& (r = cast(RETURN.class, ins[0])) != null && Objects.equals(Type.VOID, r.getType())) {
+				//
+				getMethodsByName(clz.getDeclaredMethods(), m != null ? m.getName() : null).forEach(x -> {
+					//
+					if (x == null) {
+						//
+						return;
+						//
+					} // if
+						//
+					if (x.getParameterCount() == 1) {
+						//
+						Assertions.assertDoesNotThrow(() -> x.invoke(instance, (Object) null));
+						//
+					} // if
+						//
+				});
+				//
+			} // if
+				//
+		} // for
+			//
+	}
+
+	private static List<Method> getMethodsByName(final Method[] ms, final String name) {
+		//
+		return Arrays.stream(ms).filter(m -> m != null && Objects.equals(m.getName(), name)).toList();
+		//
 	}
 
 	@Test
