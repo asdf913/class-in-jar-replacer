@@ -514,6 +514,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final boolean isGui = !GraphicsEnvironment.isHeadless();
 		//
+		final boolean isNotUnderDebugOrMaven = !isUnderDebugOrMaven();
+		//
 		if (Objects.equals(source, dtFileJar)) {
 			//
 			acceptDrop(dtde, DnDConstants.ACTION_COPY_OR_MOVE);
@@ -524,8 +526,8 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 			if (!exists(f)) {
 				//
-				testAndAccept(Predicates.always(isGui, null), String.format("%1$s not exist", absolutePath),
-						x -> JOptionPane.showMessageDialog(null, x));
+				testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null),
+						String.format("%1$s not exist", absolutePath), x -> JOptionPane.showMessageDialog(null, x));
 				//
 				return;
 				//
@@ -617,16 +619,18 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final boolean isGui = !GraphicsEnvironment.isHeadless();
 		//
+		final boolean isNotUnderDebugOrMaven = !isUnderDebugOrMaven();
+		//
 		if (list == null || list.isEmpty()) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Pleaes drop a file",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "Please drop a file",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
 		} else if (list.size() > 1) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Only one file should be dropped",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "Only one file should be dropped",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
@@ -637,14 +641,15 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		if (object == null) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Please drop null",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "A null is dropped",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
 			//
 		} else if (!(object instanceof File)) {
 			//
-			testAndAccept(Predicates.always(isGui, null), String.format("You have dropped %1$s", getClass(object)),
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null),
+					String.format("You have dropped %1$s", getClass(object)),
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return null;
@@ -758,9 +763,11 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 		//
 		final boolean isGui = !GraphicsEnvironment.isHeadless();
 		//
+		final boolean isNotUnderDebugOrMaven = !isUnderDebugOrMaven();
+		//
 		if (Boolean.logicalOr(!exists(fileJar), !isFile(fileJar))) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Please drap a Jar File",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "Please drap a Jar File",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
@@ -786,7 +793,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		} else if (!Objects.equals(getMimeType(ci), "application/zip")) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Please drop a ZIP file",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "Please drop a ZIP file",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
@@ -795,7 +802,7 @@ public class ClassInJarReplacer extends JFrame implements DropTargetListener, Ac
 			//
 		if (Boolean.logicalOr(!exists(file), !isFile(file))) {
 			//
-			testAndAccept(Predicates.always(isGui, null), "Please drap a File",
+			testAndAccept(Predicates.always(isGui && isNotUnderDebugOrMaven, null), "Please drop a File",
 					x -> JOptionPane.showMessageDialog(null, x));
 			//
 			return;
