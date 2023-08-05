@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>org.zeroturnaround</groupId>
 			<artifactId>zt-zip</artifactId>
-			<version>1.15</version>
+			<version>1.16</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
